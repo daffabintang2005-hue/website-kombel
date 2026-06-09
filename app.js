@@ -1,9 +1,4 @@
-// ============================================
-// KOMBEL PAUD KARAMEN SIMAERUK
-// Versi dengan elemen interaktif dan animasi
-// ============================================
 
-// === KONFIGURASI ===
 const totalFoto = 20;
 
 const temaCaption = [
