@@ -1,4 +1,9 @@
+// ============================================
+// KOMBEL PAUD KARAMEN SIMAERUK
+// Versi dengan perbaikan tampilan HP
+// ============================================
 
+// === KONFIGURASI ===
 const totalFoto = 20;
 
 const temaCaption = [
@@ -41,7 +46,9 @@ for (let i = 1; i <= totalFoto; i++) {
 
 // === TAMBAHAN ELEMEN DEKORASI ===
 function addDecorations() {
-  // Tambah elemen dekorasi daun
+  // Cek apakah dekorasi sudah ada
+  if (document.querySelector('.decor-leaf')) return;
+  
   const decorLeft = document.createElement('div');
   decorLeft.className = 'decor-leaf';
   decorLeft.innerHTML = '🌿🍃🌱';
@@ -57,27 +64,48 @@ function addDecorations() {
 const galleryContainer = document.getElementById('galleryGrid');
 
 function renderGallery() {
-  if (!galleryContainer) return;
+  console.log("renderGallery dipanggil, container:", galleryContainer);
+  
+  if (!galleryContainer) {
+    console.error("galleryContainer tidak ditemukan!");
+    return;
+  }
+  
+  // Kosongkan container terlebih dahulu
   galleryContainer.innerHTML = '';
   
-  galleryData.forEach((item, idx) => {
-    const col = document.createElement('div');
-    col.className = 'foto-card';
-    col.style.setProperty('--index', idx);
-    col.innerHTML = `
-      <div class="image-loading" style="position: relative;">
-        <img src="${item.url}" alt="${item.alt}" loading="lazy" 
-             onerror="this.src='${item.fallback}'; this.parentElement.classList.remove('image-loading');"
-             onload="this.parentElement.classList.remove('image-loading');">
-      </div>
-      <p><i class="fas fa-camera"></i> ${item.caption}</p>
-    `;
-    col.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openLightbox(item.url);
+  // Tambahkan pesan loading sementara
+  galleryContainer.innerHTML = '<div style="text-align:center; padding:40px;"><i class="fas fa-spinner fa-spin"></i> Memuat galeri...</div>';
+  
+  // Gunakan setTimeout untuk memastikan render berjalan
+  setTimeout(() => {
+    galleryContainer.innerHTML = '';
+    
+    galleryData.forEach((item, idx) => {
+      const col = document.createElement('div');
+      col.className = 'foto-card';
+      col.style.setProperty('--index', idx);
+      col.innerHTML = `
+        <div class="image-wrapper" style="position: relative; overflow: hidden;">
+          <img src="${item.url}" alt="${item.alt}" loading="lazy" 
+               style="width:100%; aspect-ratio:1/1; object-fit:cover;"
+               onerror="this.src='${item.fallback}';"
+               onclick="openLightbox('${item.url}')">
+        </div>
+        <p><i class="fas fa-camera"></i> ${item.caption}</p>
+      `;
+      
+      // Tambahkan event click ke card
+      col.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openLightbox(item.url);
+      });
+      
+      galleryContainer.appendChild(col);
     });
-    galleryContainer.appendChild(col);
-  });
+    
+    console.log("Gallery selesai dirender, jumlah foto:", galleryContainer.children.length);
+  }, 50);
 }
 
 // === LIGHTBOX ===
@@ -91,9 +119,11 @@ function openLightbox(src) {
   if (lightbox) {
     lightbox.classList.add('active');
   }
-  // Prevent body scroll
   document.body.style.overflow = 'hidden';
 }
+
+// Expose ke global agar bisa dipanggil dari HTML
+window.openLightbox = openLightbox;
 
 function closeLightbox() {
   if (lightbox) {
@@ -104,7 +134,6 @@ function closeLightbox() {
 
 if (lightbox) {
   lightbox.addEventListener('click', closeLightbox);
-  // Close with ESC key
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && lightbox.classList.contains('active')) {
       closeLightbox();
@@ -123,14 +152,19 @@ const pages = {
 const navBtns = document.querySelectorAll('.nav-btn');
 
 function showPage(pageId) {
+  console.log("Menampilkan halaman:", pageId);
+  
+  // Sembunyikan semua halaman
   Object.values(pages).forEach(page => {
     if (page) page.classList.remove('active-page');
   });
   
+  // Tampilkan halaman target
   if (pages[pageId]) {
     pages[pageId].classList.add('active-page');
   }
   
+  // Update tombol aktif
   navBtns.forEach(btn => {
     if (btn.getAttribute('data-page') === pageId) {
       btn.classList.add('active');
@@ -139,32 +173,31 @@ function showPage(pageId) {
     }
   });
   
-  if (pageId === 'dokumentasi' && galleryContainer && galleryContainer.children.length === 0) {
-    renderGallery();
+  // Jika halaman dokumentasi, RENDER GALERI PASTI JALAN
+  if (pageId === 'dokumentasi') {
+    console.log("Halaman dokumentasi aktif, memastikan gallery dirender");
+    // Beri sedikit delay untuk memastikan DOM sudah siap
+    setTimeout(() => {
+      if (galleryContainer && galleryContainer.children.length <= 1) {
+        renderGallery();
+      } else if (galleryContainer && galleryContainer.innerHTML === '') {
+        renderGallery();
+      }
+    }, 100);
   }
   
-  // Trigger re-animation
+  // Scroll ke container
   const container = document.querySelector('.pages-container');
   if (container) {
-    container.style.animation = 'none';
-    setTimeout(() => {
-      container.style.animation = '';
-    }, 10);
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
+// Event listener untuk navigasi
 navBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', (e) => {
     const pageTarget = btn.getAttribute('data-page');
-    if (pageTarget === 'cover') showPage('cover');
-    if (pageTarget === 'deskripsi') showPage('deskripsi');
-    if (pageTarget === 'visimisi') showPage('visimisi');
-    if (pageTarget === 'dokumentasi') showPage('dokumentasi');
-    
-    const container = document.querySelector('.pages-container');
-    if (container) {
-      container.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    showPage(pageTarget);
   });
 });
 
@@ -175,17 +208,12 @@ const toGalBtn = document.getElementById('toGalBtn');
 if (toDeskBtn) {
   toDeskBtn.addEventListener('click', () => {
     showPage('deskripsi');
-    const container = document.querySelector('.pages-container');
-    if (container) container.scrollIntoView({ behavior: 'smooth' });
   });
 }
 
 if (toGalBtn) {
   toGalBtn.addEventListener('click', () => {
     showPage('dokumentasi');
-    if (galleryContainer && galleryContainer.children.length === 0) renderGallery();
-    const container = document.querySelector('.pages-container');
-    if (container) container.scrollIntoView({ behavior: 'smooth' });
   });
 }
 
@@ -201,7 +229,7 @@ window.addEventListener('scroll', () => {
   }
 });
 
-// === INTERSECTION OBSERVER FOR SCROLL ANIMATIONS ===
+// === INTERSECTION OBSERVER ===
 const observerOptions = {
   threshold: 0.1,
   rootMargin: '0px 0px -50px 0px'
@@ -223,10 +251,9 @@ document.querySelectorAll('.card-content, .misi-item, .foto-card').forEach(el =>
   observer.observe(el);
 });
 
-// === TYPING EFFECT FOR SUBTITLE (optional) ===
+// === TYPING EFFECT FOR SUBTITLE ===
 const subtitleElement = document.querySelector('.sub');
 if (subtitleElement) {
-  const originalText = subtitleElement.innerHTML;
   const words = ['✨ Menari di Atas Akar Budaya Mentawai', '🌸 Menyemai Generasi Emas', '🍃 Belajar Sambil Bermain', '🌺 PAUD Berkarakter Pancasila'];
   let wordIndex = 0;
   
@@ -242,14 +269,26 @@ if (subtitleElement) {
   }, 4000);
 }
 
-// === RIPPLE EFFECT ON BUTTONS ===
+// === RIPPLE EFFECT ===
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes rippleAnim {
+    0% { width: 0; height: 0; opacity: 0.5; }
+    100% { width: 200px; height: 200px; opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
+
 const buttons = document.querySelectorAll('.btn-explore, .nav-links button');
 buttons.forEach(btn => {
   btn.addEventListener('click', function(e) {
     const ripple = document.createElement('span');
     ripple.classList.add('ripple');
-    ripple.style.left = `${e.clientX - btn.offsetLeft}px`;
-    ripple.style.top = `${e.clientY - btn.offsetTop}px`;
+    const rect = btn.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    ripple.style.left = `${x}px`;
+    ripple.style.top = `${y}px`;
     ripple.style.position = 'absolute';
     ripple.style.width = '0';
     ripple.style.height = '0';
@@ -260,30 +299,54 @@ buttons.forEach(btn => {
     btn.style.position = 'relative';
     btn.style.overflow = 'hidden';
     btn.appendChild(ripple);
-    
     setTimeout(() => ripple.remove(), 600);
   });
 });
 
-// Add ripple animation
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes rippleAnim {
-    0% { width: 0; height: 0; opacity: 0.5; }
-    100% { width: 200px; height: 200px; opacity: 0; }
+// === INISIALISASI SAAT LOAD ===
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("DOM fully loaded, memulai inisialisasi...");
+  
+  // Tambah dekorasi
+  addDecorations();
+  
+  // Pre-render gallery (tapi disembunyikan dulu)
+  if (galleryContainer) {
+    renderGallery();
   }
-`;
-document.head.appendChild(style);
+  
+  // Pastikan halaman cover aktif pertama kali
+  if (pages.cover && !pages.cover.classList.contains('active-page')) {
+    pages.cover.classList.add('active-page');
+  }
+  
+  console.log("Inisialisasi selesai");
+});
 
-// === INITIAL RENDER ===
-if (galleryContainer) {
-  renderGallery();
-}
+// === PERBAIKAN UNTUK HP: Resize handler ===
+let resizeTimeout;
+window.addEventListener('resize', function() {
+  // Jika halaman dokumentasi sedang aktif, refresh gallery layout
+  if (pages.dokumentasi && pages.dokumentasi.classList.contains('active-page')) {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (galleryContainer) {
+        // Trigger reflow
+        galleryContainer.style.display = 'none';
+        setTimeout(() => {
+          galleryContainer.style.display = 'grid';
+        }, 10);
+      }
+    }, 250);
+  }
+});
 
-// === ADD DECORATIONS ===
-addDecorations();
+// === FALLBACK: Jika gallery masih kosong setelah 2 detik ===
+setTimeout(function() {
+  if (galleryContainer && galleryContainer.children.length === 0) {
+    console.log("Fallback: gallery masih kosong, render ulang");
+    renderGallery();
+  }
+}, 2000);
 
-// === WELCOME CONSOLE MESSAGE ===
-console.log("%c✨ KOMBEL PAUD Karamen Simaeruk ✨", "color: #C58C4A; font-size: 16px; font-weight: bold;");
-console.log("%cKomunitas Belajar PAUD Berbasis Budaya Mentawai", "color: #8B5A2B; font-size: 12px;");
-console.log("%c📸 Masukkan 20 foto ke folder images dengan nama dokumentasi1.jpg s/d dokumentasi20.jpg", "color: #4A5B3C;");
+console.log("✅ KOMBEL PAUD Karamen Simaeruk siap! Pastikan folder 'images' berisi dokumentasi1.jpg - dokumentasi20.jpg");

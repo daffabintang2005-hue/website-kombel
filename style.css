@@ -627,3 +627,42 @@ footer::before {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
   50% { transform: translateY(-15px) rotate(5deg); }
 }
+
+/* Perbaikan khusus untuk HP */
+@media (max-width: 768px) {
+  .gallery-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+    gap: 12px !important;
+  }
+  
+  .foto-card {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  .foto-card img {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1/1 !important;
+  }
+  
+  #dokumentasi-page {
+    display: block !important;
+    min-height: 400px;
+  }
+  
+  #galleryGrid {
+    min-height: 300px;
+  }
+}
+
+/* Pastikan page dokumentasi tidak disembunyikan */
+.page {
+  display: none;
+}
+
+.page.active-page {
+  display: block !important;
+}
