@@ -10,7 +10,67 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="motif-bg"></div>
+
+<!-- Tombol Admin Panel -->
+<button id="adminToggleBtn" class="admin-toggle">
+  <i class="fas fa-user-shield"></i> Admin Panel
+</button>
+
+<!-- Admin Panel Sidebar -->
+<div id="adminPanel" class="admin-panel">
+  <div class="admin-header">
+    <h3><i class="fas fa-crown"></i> Panel Admin</h3>
+    <button id="closeAdminBtn" class="close-admin">&times;</button>
+  </div>
+  <div class="admin-tabs">
+    <button class="admin-tab active" data-tab="profil">Foto Profil</button>
+    <button class="admin-tab" data-tab="deskripsi">Deskripsi</button>
+    <button class="admin-tab" data-tab="visimisi">Visi & Misi</button>
+    <button class="admin-tab" data-tab="dokumentasi">Dokumentasi</button>
+  </div>
+  
+  <div class="admin-content">
+    <!-- Tab Foto Profil -->
+    <div id="tab-profil" class="admin-tab-content active">
+      <h4>Foto Profil Cover</h4>
+      <div class="current-photo">
+        <img id="currentCoverImg" src="https://placehold.co/600x300/FCE9C4/B47C42?text=Ilustrasi+PAUD+Mentawai" alt="Foto Profil">
+      </div>
+      <input type="file" id="coverUpload" accept="image/*">
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button id="saveCoverBtn" class="admin-save"><i class="fas fa-save"></i> Simpan</button>
+        <button id="deleteCoverBtn" class="admin-delete"><i class="fas fa-trash"></i> Hapus Cover</button>
+      </div>
+      <p class="admin-note">Ukuran yang disarankan: 600x300 pixel</p>
+    </div>
+    
+    <!-- Tab Deskripsi -->
+    <div id="tab-deskripsi" class="admin-tab-content">
+      <h4>Edit Deskripsi Komunitas</h4>
+      <textarea id="deskripsiText" rows="12" placeholder="Tulis deskripsi komunitas di sini..."></textarea>
+      <button id="saveDeskripsiBtn" class="admin-save"><i class="fas fa-save"></i> Simpan Deskripsi</button>
+    </div>
+    
+    <!-- Tab Visi & Misi -->
+    <div id="tab-visimisi" class="admin-tab-content">
+      <h4>Edit Visi</h4>
+      <textarea id="visiText" rows="3" placeholder="Visi komunitas..."></textarea>
+      <h4 style="margin-top: 20px;">Edit Misi (pisahkan dengan baris baru, format: Judul: Deskripsi)</h4>
+      <textarea id="misiText" rows="8" placeholder="Pengembangan Kompetensi Pendidik: Meningkatkan profesionalisme guru&#10;Peningkatan Kualitas Pembelajaran: Memfasilitasi kurikulum inovatif"></textarea>
+      <button id="saveVisimisiBtn" class="admin-save"><i class="fas fa-save"></i> Simpan Visi & Misi</button>
+    </div>
+    
+    <!-- Tab Dokumentasi -->
+    <div id="tab-dokumentasi" class="admin-tab-content">
+      <h4>Tambah Foto Dokumentasi</h4>
+      <input type="file" id="docUpload" accept="image/*" multiple>
+      <button id="addPhotosBtn" class="admin-save"><i class="fas fa-plus"></i> Tambah Foto</button>
+      <hr>
+      <h4>Daftar Foto Dokumentasi</h4>
+      <div id="galleryManager" class="gallery-manager"></div>
+    </div>
+  </div>
+</div>
 
 <nav>
   <div class="logo">
@@ -26,7 +86,7 @@
 </nav>
 
 <div class="pages-container" id="pagesContainer">
-  <!-- HALAMAN COVER / UTAMA -->
+  <!-- HALAMAN COVER -->
   <div id="cover-page" class="page active-page">
     <div class="hero-cover">
       <div class="cover-icon">
@@ -39,30 +99,17 @@
         <button class="btn-explore" id="toGalBtn">📸 Lihat Dokumentasi</button>
       </div>
       <div style="margin-top: 45px;">
-        <img src="https://placehold.co/600x300/FCE9C4/B47C42?text=Ilustrasi+PAUD+Mentawai" alt="Ilustrasi PAUD" class="hero-img">
+        <img id="coverProfileImg" src="https://placehold.co/600x300/FCE9C4/B47C42?text=Ilustrasi+PAUD+Mentawai" alt="Foto Profil PAUD" class="hero-img">
         <p style="margin-top: 20px; font-style:italic;">"Sikerei ceria, anak belajar sambil bermain di alam"</p>
       </div>
     </div>
   </div>
 
-  <!-- HALAMAN DESKRIPSI KOMUNITAS -->
+  <!-- HALAMAN DESKRIPSI -->
   <div id="deskripsi-page" class="page">
     <div class="card-content">
-      <h2><i class="fas fa-comunity"></i> ᨒ Tentang Komunitas Belajar PAUD Karamen Simaeruk</h2>
-      <p style="font-size:1.1rem; line-height:1.5;"><strong>Gugus PAUD Karamen Simaeruk</strong> adalah wadah koordinasi dan kerja sama antar satuan PAUD (TK, KB, TPA, SPS) di Kecamatan Karamen, Kepulauan Mentawai. Terinspirasi dari filosofi “Simaeruk” (bersatu dalam perbedaan), komunitas ini menjadi “rumah belajar” bagi para pendidik PAUD serta kepala sekolah untuk saling berbagi praktik baik, mengembangkan program bersama, dan meningkatkan mutu layanan anak usia dini.</p>
-      <br>
-      <p>Sebagai bagian dari penguatan <strong>Pusat Kegiatan Gugus (PKG) PAUD</strong>, kami mewadahi pembinaan profesionalitas guru secara terencana, koordinasi antarlembaga, serta pengembangan kurikulum yang kontekstual dengan budaya Mentawai. Dengan semangat gotong royong, anak-anak usia dini mendapatkan stimulasi holistik yang menjunjung kearifan lokal, seperti anyaman, tari turuk laggai, dan cerita rakyat.</p>
-      <br>
-      <div style="background: #EFE2CC; border-radius: 28px; padding: 20px; margin-top: 10px;">
-        <i class="fas fa-star-of-life"></i> <strong>Fungsi Utama Komunitas:</strong>
-        <ul style="margin-top: 12px; list-style-type: none;">
-          <li>✓ Wadah Pembinaan & peningkatan kompetensi pendidik PAUD</li>
-          <li>✓ Pusat Koordinasi berbagi informasi & sumber daya antar lembaga</li>
-          <li>✓ Pengembangan Kurikulum bermuatan budaya Mentawai & standar mutu</li>
-          <li>✓ Kolaborasi bersama Dinas Pendidikan dan mitra orang tua</li>
-        </ul>
-      </div>
-      <p style="margin-top: 25px;"><i class="fas fa-map-marked-alt"></i> <strong>Lokasi:</strong> Kecamatan Karamen, Kabupaten Kepulauan Mentawai, Sumatera Barat. <br>Bergema dalam semangat <em>“Pusuk simagere, anak PAUD cerdas berkarakter”</em>.</p>
+      <h2><i class="fas fa-community"></i> ᨒ Tentang Komunitas Belajar PAUD Karamen Simaeruk</h2>
+      <div id="deskripsiDisplay" class="deskripsi-content"></div>
     </div>
   </div>
 
@@ -70,25 +117,14 @@
   <div id="visimisi-page" class="page">
     <div class="card-content">
       <h2><i class="fas fa-eye"></i> Visi Komunitas</h2>
-      <p style="font-size:1.2rem; font-weight:600; background:#F7EAD6; border-radius: 30px; padding: 16px;"><i class="fas fa-quote-left"></i> “Terwujudnya Gugus PAUD yang unggul, berkarakter, dan berdaya saing untuk membentuk generasi emas Indonesia yang cerdas, kreatif, dan berakhlak mulia”</p>
-      <p>Inti visi: <strong>Anak PAUD menjadi generasi emas yang pintar dan berkarakter Pancasila</strong> dengan semangat budaya Mentawai. Profesionalitas kerja, pusat inovasi, keunggulan berbudaya, dan layanan berkualitas menjadi pilar utama.</p>
+      <div id="visiDisplay" class="visi-content"></div>
       <br>
       <h2><i class="fas fa-bullhorn"></i> Misi Utama</h2>
-      <div class="grid-misi">
-        <div class="misi-item"><i class="fas fa-chalkboard-user fa-lg"></i> <strong>Pengembangan Kompetensi Pendidik</strong><br>Meningkatkan profesionalisme guru melalui Kelompok Kerja Guru (KKG) dan pelatihan manajerial.</div>
-        <div class="misi-item"><i class="fas fa-book-open"></i> <strong>Peningkatan Kualitas Pembelajaran</strong><br>Memfasilitasi kurikulum inovatif, metode kreatif, dan alat penilaian sesuai tumbuh kembang anak.</div>
-        <div class="misi-item"><i class="fas fa-building"></i> <strong>Pengelolaan Kelembagaan</strong><br>Koordinasi administrasi PAUD yang tertib, akuntabel, dan berstandar nasional.</div>
-        <div class="misi-item"><i class="fas fa-handshake"></i> <strong>Kemitraan & Komunikasi</strong><br>Kolaborasi antara sekolah, orang tua, masyarakat, dan pemerintah.</div>
-        <div class="misi-item"><i class="fas fa-heart"></i> <strong>Pembentukan Karakter Anak</strong><br>Penanaman nilai jujur, disiplin, gotong royong, toleransi, serta kearifan lokal Mentawai.</div>
-        <div class="misi-item"><i class="fas fa-leaf"></i> <strong>PAUD Holistik Integratif</strong><br>Perhatian pada gizi, kesehatan, pengasuhan, dan perlindungan anak di lingkungan sekolah.</div>
-      </div>
-      <div style="margin-top: 1.5rem; background:#FFF0DC; border-radius: 28px; padding: 16px;">
-        <i class="fas fa-flag-checkered"></i> <strong>Capaian konkrit misi:</strong> Pelatihan guru, lomba bersama, parenting bareng, peningkatan peran komite, dan terwujudnya layanan PAUD yang mengintegrasikan kesehatan serta perlindungan anak.
-      </div>
+      <div id="misiDisplay" class="misi-content"></div>
     </div>
   </div>
 
-  <!-- HALAMAN DOKUMENTASI 20 FOTO -->
+  <!-- HALAMAN DOKUMENTASI -->
   <div id="dokumentasi-page" class="page">
     <div class="card-content">
       <h2><i class="fas fa-camera-retro"></i> Galeri Kegiatan Komunitas</h2>
