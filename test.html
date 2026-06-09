@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Admin Panel</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .admin-panel { 
+            position: fixed; 
+            bottom: 100px; 
+            right: 20px; 
+            width: 300px; 
+            background: white; 
+            border: 1px solid #ccc; 
+            padding: 15px; 
+            border-radius: 10px;
+            display: none;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .admin-panel.open { display: block; }
+        .admin-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #4A3520;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        .admin-toggle.admin-active { background: #27ae60; }
+    </style>
+</head>
+<body>
+    <h1>Website PAUD Karamen</h1>
+    <p>Klik tombol perisai di pojok kanan bawah</p>
+    
+    <button id="adminToggleBtn" class="admin-toggle">
+        <i class="fas fa-user-shield"></i> 🛡️
+    </button>
+    
+    <div id="adminPanel" class="admin-panel">
+        <h3>Panel Admin</h3>
+        <button onclick="alert('Upload Cover')">Upload Cover</button>
+        <button onclick="alert('Edit Deskripsi')">Edit Deskripsi</button>
+        <button onclick="alert('Edit Visi Misi')">Edit Visi Misi</button>
+        <button onclick="alert('Upload Dokumentasi')">Upload Foto</button>
+        <button onclick="alert('Hapus Foto')">Hapus Foto</button>
+        <button onclick="document.getElementById('adminPanel').classList.remove('open')">Tutup</button>
+    </div>
+    
+    <script>
+        let isAdmin = false;
+        
+        // Cek admin dari URL
+        if (window.location.search.includes('admin=true')) {
+            isAdmin = true;
+            sessionStorage.setItem('adminLoggedIn', 'true');
+        }
+        
+        if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+            isAdmin = true;
+        }
+        
+        const toggleBtn = document.getElementById('adminToggleBtn');
+        const adminPanel = document.getElementById('adminPanel');
+        
+        if (isAdmin) {
+            toggleBtn.classList.add('admin-active');
+        }
+        
+        toggleBtn.onclick = () => {
+            if (!isAdmin) {
+                // Login
+                const pwd = prompt('Masukkan password admin:');
+                if (pwd === 'paud123') {
+                    isAdmin = true;
+                    sessionStorage.setItem('adminLoggedIn', 'true');
+                    toggleBtn.classList.add('admin-active');
+                    alert('Login berhasil! Sekarang klik tombol lagi untuk buka panel');
+                } else {
+                    alert('Password salah!');
+                }
+            } else {
+                adminPanel.classList.toggle('open');
+            }
+        };
+        
+        // Tutup panel jika klik di luar
+        document.addEventListener('click', (e) => {
+            if (!adminPanel.contains(e.target) && !toggleBtn.contains(e.target)) {
+                adminPanel.classList.remove('open');
+            }
+        });
+        
+        console.log('Mode:', isAdmin ? 'ADMIN' : 'USER');
+        console.log('Klik tombol perisai untuk buka panel admin');
+    </script>
+</body>
+</html>

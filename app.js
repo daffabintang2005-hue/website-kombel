@@ -1,7 +1,24 @@
 // ============================================
 // KOMBEL PAUD KARAMEN SIMAERUK
-// FIXED: HANDLE UPLOAD DI HP + DATA TIDAK HILANG
+// VERSI FINAL - DENGAN LOGIN ADMIN
+// DATABASE: GOOGLE SHEETS
 // ============================================
+
+// ============================================
+// KONFIGURASI
+// ============================================
+// GANTI DENGAN URL GOOGLE APPS SCRIPT ANDA!
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztQJvYOdt65cEtK4MaXZkGWvuDGD5qKfxMbId2qdkd34HkLSvgYyVo5g2ybm6q6gyUdw/exec";
+
+// KONFIGURASI LOGIN ADMIN (UBAH SESUAI KEINGINAN)
+const ADMIN_USERNAME = "admin";
+const ADMIN_PASSWORD = "paud123";
+
+// Konfigurasi upload
+const MAX_FILE_SIZE_MB = 2;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const COMPRESSION_QUALITY = 0.6;
+const MAX_IMAGE_WIDTH = 800;
 
 // Data default
 let komunitasData = {
@@ -15,60 +32,285 @@ let komunitasData = {
         "Acara Penting": [],
         "Prestasi": [],
         "Lainnya": []
-    }
+    },
+    lastUpdated: new Date().toISOString()
 };
 
-// KONFIGURASI - DIKECILKAN UNTUK HP
-const MAX_FILE_SIZE_MB = 2; // MAX 2MB (bukan 500MB!)
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
-const COMPRESSION_QUALITY = 0.6; // Kompresi 60%
-const MAX_IMAGE_WIDTH = 800; // Resize maksimal lebar 800px
-
 let selectedGallery = "Kegiatan Belajar";
+let isAdmin = false;
+let autoRefreshInterval = null;
 
 // ============================================
-// LOAD & SAVE DATA
+// DATABASE FUNCTIONS (GOOGLE SHEETS)
 // ============================================
-function loadData() {
-    const savedData = localStorage.getItem('komunitasPAUD');
-    if (savedData) {
+
+async function loadDataFromServer() {
+    showLoading(true, 'Mengambil data...');
+    
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData`, {
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+            const result = await response.json();
+            
+            if (result.success && result.data) {
+                komunitasData = result.data;
+                
+                localStorage.setItem('komunitasPAUD_cache', JSON.stringify(komunitasData));
+                localStorage.setItem('komunitasPAUD_cache_time', Date.now().toString());
+                
+                const defaultGalleries = ["Kegiatan Belajar", "Ekstrakurikuler", "Acara Penting", "Prestasi", "Lainnya"];
+                defaultGalleries.forEach(gallery => {
+                    if (!komunitasData.galleries[gallery]) {
+                        komunitasData.galleries[gallery] = [];
+                    }
+                });
+                
+                renderAll();
+                showNotification('Data berhasil dimuat!', 'success');
+            } else {
+                throw new Error("Data kosong");
+            }
+        } else {
+            throw new Error("Gagal fetch");
+        }
+        
+    } catch(error) {
+        console.log("Error load data:", error);
+        
+        const cachedData = localStorage.getItem('komunitasPAUD_cache');
+        if (cachedData) {
+            try {
+                komunitasData = JSON.parse(cachedData);
+                renderAll();
+                showNotification('Menggunakan data tersimpan (offline)', 'info');
+            } catch(e) {}
+        } else {
+            renderAll();
+        }
+    }
+    
+    showLoading(false);
+}
+
+async function saveDataToServer() {
+    if (!isAdmin) return false;
+    
+    komunitasData.lastUpdated = new Date().toISOString();
+    showLoading(true, 'Menyimpan ke server...');
+    
+    try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'saveData', data: komunitasData })
+        });
+        
+        localStorage.setItem('komunitasPAUD_cache', JSON.stringify(komunitasData));
+        localStorage.setItem('komunitasPAUD_cache_time', Date.now().toString());
+        
+        showNotification('✅ Data tersimpan di server!', 'success');
+        return true;
+    } catch(error) {
+        console.error("Error save data:", error);
+        showNotification('Gagal menyimpan! Periksa koneksi.', 'error');
+        return false;
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function saveData() {
+    if (isAdmin) {
+        await saveDataToServer();
+    } else {
+        localStorage.setItem('komunitasPAUD_cache', JSON.stringify(komunitasData));
+    }
+}
+
+function startAutoRefresh() {
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+    
+    autoRefreshInterval = setInterval(async () => {
+        if (isAdmin) return;
+        
         try {
-            const parsed = JSON.parse(savedData);
-            if (parsed && parsed.galleries) {
-                komunitasData = parsed;
+            const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData`);
+            const result = await response.json();
+            
+            if (result.success && result.data && result.data.lastUpdated !== komunitasData.lastUpdated) {
+                komunitasData = result.data;
+                renderAll();
+                showNotification('📢 Konten telah diperbarui oleh Admin!', 'info');
             }
         } catch(e) {
-            console.error('Error loading:', e);
-            // Jika data corrupt, reset
-            localStorage.removeItem('komunitasPAUD');
+            console.log("Auto refresh error:", e);
         }
-    }
-    
-    const defaultGalleries = ["Kegiatan Belajar", "Ekstrakurikuler", "Acara Penting", "Prestasi", "Lainnya"];
-    defaultGalleries.forEach(gallery => {
-        if (!komunitasData.galleries[gallery]) {
-            komunitasData.galleries[gallery] = [];
-        }
-    });
-    
-    saveData();
-}
-
-function saveData() {
-    try {
-        localStorage.setItem('komunitasPAUD', JSON.stringify(komunitasData));
-        console.log("Data tersimpan, ukuran:", JSON.stringify(komunitasData).length, "bytes");
-    } catch(e) {
-        if (e.name === 'QuotaExceededError') {
-            showNotification('Peringatan: Penyimpanan penuh! Hapus beberapa foto lama.', 'error');
-            console.error("LocalStorage penuh!");
-        }
-    }
+    }, 10000);
 }
 
 // ============================================
-// KOMPRESI GAMBAR SEBELUM DISIMPAN
+// LOGIN ADMIN
 // ============================================
+
+function showLoginModal() {
+    const oldModal = document.getElementById('adminLoginModal');
+    if (oldModal) oldModal.remove();
+    
+    const modal = document.createElement('div');
+    modal.id = 'adminLoginModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 20000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    `;
+    modal.innerHTML = `
+        <div style="background: white; padding: 40px; border-radius: 20px; width: 350px; max-width: 90%; position:relative;">
+            <button id="closeLoginXBtn" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
+            <h2 style="text-align:center; color:#4A3520; margin-bottom:20px;">
+                <i class="fas fa-user-shield"></i> Login Admin
+            </h2>
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; margin-bottom:5px; color:#4A3520;">Username</label>
+                <input type="text" id="loginUsername" placeholder="Username" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd;">
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display:block; margin-bottom:5px; color:#4A3520;">Password</label>
+                <input type="password" id="loginPassword" placeholder="Password" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd;">
+            </div>
+            <button id="loginBtn" style="width:100%; padding:12px; background:#B47C42; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+            <button id="closeLoginBtn" style="width:100%; margin-top:10px; padding:10px; background:#ccc; color:#333; border:none; border-radius:10px; cursor:pointer;">
+                Batal
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    const loginBtn = document.getElementById('loginBtn');
+    const closeBtn = document.getElementById('closeLoginBtn');
+    const closeXBtn = document.getElementById('closeLoginXBtn');
+    const usernameInput = document.getElementById('loginUsername');
+    const passwordInput = document.getElementById('loginPassword');
+    
+    loginBtn.onclick = () => {
+        const username = usernameInput.value;
+        const password = passwordInput.value;
+        
+        if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+            isAdmin = true;
+            sessionStorage.setItem('adminLoggedIn', 'true');
+            localStorage.setItem('adminLoggedIn', 'true');
+            modal.remove();
+            showAdminUI(true);
+            renderAll();
+            showNotification('Login berhasil! Selamat datang Admin.', 'success');
+        } else {
+            showNotification('Username atau password salah!', 'error');
+            usernameInput.value = '';
+            passwordInput.value = '';
+            usernameInput.focus();
+        }
+    };
+    
+    const closeModal = () => modal.remove();
+    closeBtn.onclick = closeModal;
+    closeXBtn.onclick = closeModal;
+    
+    passwordInput.onkeypress = (e) => { if (e.key === 'Enter') loginBtn.click(); };
+    usernameInput.onkeypress = (e) => { if (e.key === 'Enter') passwordInput.focus(); };
+    
+    usernameInput.focus();
+}
+
+function logoutAdmin() {
+    if (confirm('Yakin ingin logout dari mode admin?')) {
+        sessionStorage.removeItem('adminLoggedIn');
+        localStorage.removeItem('adminLoggedIn');
+        isAdmin = false;
+        showAdminUI(false);
+        renderAll();
+        startAutoRefresh();
+        showNotification('Anda telah logout dari mode admin.', 'info');
+    }
+}
+
+function checkAdminStatus() {
+    const savedAdmin = sessionStorage.getItem('adminLoggedIn') || localStorage.getItem('adminLoggedIn');
+    
+    if (savedAdmin === 'true') {
+        isAdmin = true;
+        showAdminUI(true);
+        showNotification('Mode Admin Aktif!', 'success');
+    } else {
+        isAdmin = false;
+        showAdminUI(false);
+        startAutoRefresh();
+    }
+}
+
+function showAdminUI(isAdminMode) {
+    const adminToggle = document.getElementById('adminToggleBtn');
+    const adminPanel = document.getElementById('adminPanel');
+    
+    if (adminToggle) {
+        adminToggle.style.display = 'flex';
+        if (isAdminMode) {
+            adminToggle.classList.add('admin-active');
+        } else {
+            adminToggle.classList.remove('admin-active');
+        }
+    }
+    
+    if (adminPanel && !isAdminMode) {
+        adminPanel.classList.remove('open');
+    }
+    
+    updateAdminIndicator(isAdminMode);
+    renderGalleryManager();
+}
+
+function updateAdminIndicator(isAdminMode) {
+    let indicator = document.getElementById('adminIndicator');
+    if (!indicator) return;
+    
+    if (isAdminMode) {
+        indicator.className = 'admin-indicator admin-mode';
+        indicator.innerHTML = '<i class="fas fa-user-shield"></i> Mode Admin <i class="fas fa-chevron-right"></i>';
+    } else {
+        indicator.className = 'admin-indicator user-mode';
+        indicator.innerHTML = '<i class="fas fa-user"></i> Mode User <i class="fas fa-chevron-right"></i>';
+    }
+    
+    indicator.onclick = () => {
+        if (isAdminMode) {
+            logoutAdmin();
+        } else {
+            showLoginModal();
+        }
+    };
+}
+
+// ============================================
+// KOMPRESI GAMBAR
+// ============================================
+
 function compressImage(file, callback) {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -76,7 +318,6 @@ function compressImage(file, callback) {
         const img = new Image();
         img.src = e.target.result;
         img.onload = function() {
-            // Hitung dimensi baru
             let width = img.width;
             let height = img.height;
             
@@ -85,30 +326,27 @@ function compressImage(file, callback) {
                 width = MAX_IMAGE_WIDTH;
             }
             
-            // Buat canvas untuk kompresi
             const canvas = document.createElement('canvas');
             canvas.width = width;
             canvas.height = height;
-            
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
-            
-            // Kompres ke JPEG dengan kualitas tertentu
             const compressedDataUrl = canvas.toDataURL('image/jpeg', COMPRESSION_QUALITY);
-            
-            // Hitung ukuran setelah kompresi
-            const compressedSize = Math.round((compressedDataUrl.length * 0.75) / 1024);
-            console.log(`Ukuran asli: ${Math.round(file.size/1024)}KB, Setelah kompresi: ${compressedSize}KB`);
-            
             callback(compressedDataUrl);
         };
     };
 }
 
 // ============================================
-// UPLOAD DOKUMENTASI DENGAN KOMPRESI
+// UPLOAD FUNCTIONS
 // ============================================
-function uploadDokumentasi(files) {
+
+async function uploadDokumentasi(files) {
+    if (!isAdmin) {
+        showNotification('Login sebagai admin untuk upload foto!', 'warning');
+        return;
+    }
+    
     if (!files || files.length === 0) {
         showNotification('Pilih foto yang akan diupload!', 'error');
         return;
@@ -128,17 +366,14 @@ function uploadDokumentasi(files) {
             continue;
         }
         
-        // Cek ukuran asli
         if (file.size > 10 * 1024 * 1024) {
-            showNotification(`File ${file.name} terlalu besar (${(file.size/1024/1024).toFixed(1)}MB)! Maksimal 10MB sebelum kompresi.`, 'error');
+            showNotification(`File ${file.name} terlalu besar! Maksimal 10MB.`, 'error');
             processed++;
             checkComplete(processed, total, successCount);
             continue;
         }
         
-        showNotification(`Mengompresi ${file.name}...`, 'info');
-        
-        compressImage(file, function(compressedUrl) {
+        compressImage(file, async function(compressedUrl) {
             const newId = Date.now() + Math.floor(Math.random() * 100000) + processed;
             const caption = prompt(`Caption untuk foto:`, `Kegiatan ${selectedGallery}`);
             
@@ -156,313 +391,28 @@ function uploadDokumentasi(files) {
             processed++;
             successCount++;
             
-            saveData();
-            
-            // RENDER ULANG
+            await saveData();
             renderGallery();
             renderGalleryManager();
-            
             checkComplete(processed, total, successCount);
         });
     }
 }
 
 function checkComplete(processed, total, successCount) {
-    if (processed === total) {
-        if (successCount > 0) {
-            showNotification(`${successCount} foto berhasil ditambahkan ke "${selectedGallery}"!`, 'success');
-        }
+    if (processed === total && successCount > 0) {
+        showNotification(`${successCount} foto berhasil ditambahkan!`, 'success');
         const docUpload = document.getElementById('docUpload');
         if (docUpload) docUpload.value = '';
     }
 }
 
-// ============================================
-// FUNGSI CEK DAN HAPUS DATA BERAT
-// ============================================
-function checkStorageSize() {
-    let totalSize = 0;
-    for (let gallery in komunitasData.galleries) {
-        for (let foto of komunitasData.galleries[gallery]) {
-            if (foto.url && foto.url.startsWith('data:image')) {
-                totalSize += foto.url.length * 0.75;
-            }
-        }
-    }
-    const totalMB = (totalSize / (1024 * 1024)).toFixed(2);
-    showNotification(`Total penyimpanan: ${totalMB} MB / ~10 MB`, totalMB > 8 ? 'error' : 'success');
-    return totalSize;
-}
-
-function clearAllPhotos() {
-    if (confirm('HAPUS SEMUA FOTO? Tindakan ini tidak bisa dibatalkan!')) {
-        komunitasData.galleries = {
-            "Kegiatan Belajar": [],
-            "Ekstrakurikuler": [],
-            "Acara Penting": [],
-            "Prestasi": [],
-            "Lainnya": []
-        };
-        saveData();
-        renderGallery();
-        renderGalleryManager();
-        showNotification('Semua foto telah dihapus!', 'success');
-    }
-}
-
-// ============================================
-// RENDER GALERI (SAMA SEPERTI SEBELUMNYA)
-// ============================================
-function renderGallery() {
-    let container = document.getElementById('galleryContainer');
-    if (!container) container = document.getElementById('galleryGrid');
-    if (!container) container = document.querySelector('.gallery-grid');
-    if (!container) {
-        console.error("Container galeri tidak ditemukan!");
+async function uploadCoverPhoto(file) {
+    if (!isAdmin) {
+        showNotification('Login sebagai admin untuk mengganti cover!', 'warning');
         return;
     }
     
-    container.innerHTML = '';
-    
-    // Selector Galeri
-    const selectorDiv = document.createElement('div');
-    selectorDiv.style.cssText = `
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 30px;
-        padding: 15px;
-        background: #F7EAD6;
-        border-radius: 60px;
-        justify-content: center;
-    `;
-    
-    const galleryNames = Object.keys(komunitasData.galleries);
-    
-    galleryNames.forEach(name => {
-        const btn = document.createElement('button');
-        const fotoCount = komunitasData.galleries[name].length;
-        btn.textContent = `${name} (${fotoCount})`;
-        btn.style.cssText = `
-            padding: 10px 24px;
-            border: none;
-            border-radius: 40px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            background: ${selectedGallery === name ? '#B47C42' : '#FFFFFF'};
-            color: ${selectedGallery === name ? '#FFFFFF' : '#4A3520'};
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: all 0.3s;
-        `;
-        btn.onclick = () => {
-            selectedGallery = name;
-            renderGallery();
-            renderGalleryManager();
-        };
-        selectorDiv.appendChild(btn);
-    });
-    
-    container.appendChild(selectorDiv);
-    
-    // Grid Foto
-    const galleryGrid = document.createElement('div');
-    galleryGrid.style.cssText = `
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 25px;
-        padding: 10px;
-    `;
-    
-    const currentPhotos = komunitasData.galleries[selectedGallery] || [];
-    
-    if (currentPhotos.length === 0) {
-        galleryGrid.innerHTML = `
-            <div style="grid-column:1/-1; text-align:center; padding:60px; background:#F9F5EE; border-radius:20px;">
-                <i class="fas fa-images" style="font-size:48px; color:#B47C42; margin-bottom:15px; display:block;"></i>
-                <h3>Belum ada foto di "${selectedGallery}"</h3>
-                <p>Silakan upload foto melalui Admin Panel</p>
-                <small style="display:block; margin-top:10px; color:#999;">Max 2MB per foto (otomatis dikompres)</small>
-            </div>
-        `;
-    } else {
-        currentPhotos.forEach((foto) => {
-            const card = document.createElement('div');
-            card.style.cssText = `
-                background: white;
-                border-radius: 16px;
-                overflow: hidden;
-                box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-                cursor: pointer;
-                transition: transform 0.3s;
-            `;
-            card.onclick = () => openLightbox(foto.url);
-            card.innerHTML = `
-                <img src="${foto.url}" style="width:100%; height:200px; object-fit:cover;">
-                <div style="padding: 12px;">
-                    <p style="margin:0; color:#4A3520;"><i class="fas fa-camera"></i> ${escapeHtml(foto.caption)}</p>
-                    <small style="color:#999;">${foto.uploadedAt ? new Date(foto.uploadedAt).toLocaleDateString() : ''}</small>
-                </div>
-            `;
-            galleryGrid.appendChild(card);
-        });
-    }
-    
-    container.appendChild(galleryGrid);
-}
-
-// ============================================
-// RENDER GALLERY MANAGER (ADMIN PANEL)
-// ============================================
-function renderGalleryManager() {
-    const manager = document.getElementById('galleryManager');
-    if (!manager) return;
-    
-    manager.innerHTML = '';
-    
-    // Selector
-    const adminSelector = document.createElement('div');
-    adminSelector.style.cssText = `
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 20px;
-        padding: 12px;
-        background: #F7EAD6;
-        border-radius: 50px;
-        justify-content: center;
-    `;
-    
-    const galleryNames = Object.keys(komunitasData.galleries);
-    
-    galleryNames.forEach(name => {
-        const btn = document.createElement('button');
-        btn.textContent = `${name} (${komunitasData.galleries[name].length})`;
-        btn.style.cssText = `
-            padding: 6px 18px;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: bold;
-            background: ${selectedGallery === name ? '#B47C42' : 'white'};
-            color: ${selectedGallery === name ? 'white' : '#4A3520'};
-        `;
-        btn.onclick = () => {
-            selectedGallery = name;
-            renderGalleryManager();
-            renderGallery();
-        };
-        adminSelector.appendChild(btn);
-    });
-    
-    manager.appendChild(adminSelector);
-    
-    // Tombol hapus semua
-    const clearAllBtn = document.createElement('button');
-    clearAllBtn.textContent = '🗑️ Hapus Semua Foto';
-    clearAllBtn.style.cssText = `
-        background: #e74c3c;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 30px;
-        cursor: pointer;
-        margin-bottom: 20px;
-        width: 100%;
-        font-weight: bold;
-    `;
-    clearAllBtn.onclick = clearAllPhotos;
-    manager.appendChild(clearAllBtn);
-    
-    // Info upload
-    const uploadInfo = document.createElement('div');
-    uploadInfo.style.cssText = `
-        background: #E8F5E9;
-        padding: 12px;
-        border-radius: 12px;
-        margin-bottom: 20px;
-        text-align: center;
-        font-size: 14px;
-    `;
-    uploadInfo.innerHTML = `
-        <i class="fas fa-info-circle"></i> 
-        Upload ke: <strong>${selectedGallery}</strong><br>
-        <small>Foto akan dikompres otomatis (max 800px, kualitas 60%)</small>
-    `;
-    manager.appendChild(uploadInfo);
-    
-    const currentPhotos = komunitasData.galleries[selectedGallery] || [];
-    
-    if (currentPhotos.length === 0) {
-        const emptyMsg = document.createElement('p');
-        emptyMsg.style.cssText = 'text-align:center; padding:30px; color:#999;';
-        emptyMsg.innerHTML = `Belum ada foto di galeri "${selectedGallery}"`;
-        manager.appendChild(emptyMsg);
-        return;
-    }
-    
-    currentPhotos.forEach((foto) => {
-        const item = document.createElement('div');
-        item.style.cssText = `
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            flex-wrap: wrap;
-            background: #fff;
-            margin-bottom: 8px;
-            border-radius: 12px;
-        `;
-        item.innerHTML = `
-            <img src="${foto.url}" style="width:60px; height:60px; object-fit:cover; border-radius:10px;">
-            <input type="text" class="caption-input" data-id="${foto.id}" data-gallery="${selectedGallery}" value="${escapeHtml(foto.caption)}" style="flex:2; padding:8px; border-radius:8px; border:1px solid #ddd; font-size:12px;">
-            <button class="delete-photo-btn" data-id="${foto.id}" data-gallery="${selectedGallery}" style="background:#e74c3c; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">
-                <i class="fas fa-trash"></i>
-            </button>
-        `;
-        manager.appendChild(item);
-    });
-    
-    // Event edit caption
-    document.querySelectorAll('.caption-input').forEach(input => {
-        input.onchange = function() {
-            const gallery = this.getAttribute('data-gallery');
-            const id = parseInt(this.getAttribute('data-id'));
-            const foto = komunitasData.galleries[gallery]?.find(f => f.id === id);
-            if (foto) {
-                foto.caption = this.value;
-                saveData();
-                renderGallery();
-                showNotification('Caption berhasil diupdate!', 'success');
-            }
-        };
-    });
-    
-    // Event hapus foto
-    document.querySelectorAll('.delete-photo-btn').forEach(btn => {
-        btn.onclick = function() {
-            const gallery = this.getAttribute('data-gallery');
-            const id = parseInt(this.getAttribute('data-id'));
-            
-            if (confirm(`Hapus foto?`)) {
-                const index = komunitasData.galleries[gallery].findIndex(f => f.id === id);
-                if (index !== -1) {
-                    komunitasData.galleries[gallery].splice(index, 1);
-                    saveData();
-                    renderGallery();
-                    renderGalleryManager();
-                    showNotification('Foto berhasil dihapus!', 'success');
-                }
-            }
-        };
-    });
-}
-
-// ============================================
-// UPLOAD COVER (DENGAN KOMPRESI)
-// ============================================
-function uploadCoverPhoto(file) {
     if (!file) {
         showNotification('Pilih file terlebih dahulu!', 'error');
         return;
@@ -478,11 +428,9 @@ function uploadCoverPhoto(file) {
         return;
     }
     
-    showNotification('Mengompresi cover...', 'info');
-    
-    compressImage(file, function(compressedUrl) {
+    compressImage(file, async function(compressedUrl) {
         komunitasData.coverPhoto = compressedUrl;
-        saveData();
+        await saveData();
         renderCoverPhoto();
         showNotification('Foto cover berhasil diupdate!', 'success');
         const coverUpload = document.getElementById('coverUpload');
@@ -490,9 +438,204 @@ function uploadCoverPhoto(file) {
     });
 }
 
+async function deleteCoverPhoto() {
+    if (!isAdmin) {
+        showNotification('Login sebagai admin untuk menghapus cover!', 'warning');
+        return;
+    }
+    
+    if (confirm('Hapus foto cover? Foto akan kembali ke default.')) {
+        komunitasData.coverPhoto = "https://placehold.co/600x300/FCE9C4/B47C42?text=Ilustrasi+PAUD+Mentawai";
+        await saveData();
+        renderCoverPhoto();
+        showNotification('Foto cover berhasil dihapus!', 'success');
+    }
+}
+
+async function clearAllPhotos() {
+    if (!isAdmin) {
+        showNotification('Login sebagai admin untuk menghapus semua foto!', 'warning');
+        return;
+    }
+    
+    if (confirm('⚠️ HAPUS SEMUA FOTO? Tindakan ini tidak bisa dibatalkan!')) {
+        komunitasData.galleries = {
+            "Kegiatan Belajar": [],
+            "Ekstrakurikuler": [],
+            "Acara Penting": [],
+            "Prestasi": [],
+            "Lainnya": []
+        };
+        await saveData();
+        renderGallery();
+        renderGalleryManager();
+        showNotification('Semua foto telah dihapus!', 'success');
+    }
+}
+
 // ============================================
-// FUNGSI RENDER LAIN (SEDERHANA)
+// RENDER FUNCTIONS
 // ============================================
+
+function renderGallery() {
+    let container = document.getElementById('galleryContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    const selectorDiv = document.createElement('div');
+    selectorDiv.className = 'gallery-selector';
+    
+    const galleryNames = Object.keys(komunitasData.galleries);
+    
+    galleryNames.forEach(name => {
+        const btn = document.createElement('button');
+        const fotoCount = komunitasData.galleries[name].length;
+        btn.textContent = `${name} (${fotoCount})`;
+        if (selectedGallery === name) btn.classList.add('active');
+        btn.onclick = () => {
+            selectedGallery = name;
+            renderGallery();
+            if (isAdmin) renderGalleryManager();
+        };
+        selectorDiv.appendChild(btn);
+    });
+    
+    container.appendChild(selectorDiv);
+    
+    const galleryGrid = document.createElement('div');
+    galleryGrid.className = 'gallery-grid';
+    
+    const currentPhotos = komunitasData.galleries[selectedGallery] || [];
+    
+    if (currentPhotos.length === 0) {
+        galleryGrid.innerHTML = `
+            <div style="grid-column:1/-1; text-align:center; padding:60px; background:#F9F5EE; border-radius:20px;">
+                <i class="fas fa-images" style="font-size:48px; color:#B47C42; margin-bottom:15px; display:block;"></i>
+                <h3>Belum ada foto di "${selectedGallery}"</h3>
+                <p>${isAdmin ? 'Silakan upload foto melalui panel admin' : 'Belum ada dokumentasi untuk kategori ini'}</p>
+            </div>
+        `;
+    } else {
+        currentPhotos.forEach((foto) => {
+            const card = document.createElement('div');
+            card.className = 'gallery-card';
+            card.onclick = () => openLightbox(foto.url);
+            card.innerHTML = `
+                <img src="${foto.url}" alt="${foto.caption}">
+                <div class="caption">
+                    <i class="fas fa-camera"></i> ${escapeHtml(foto.caption)}
+                </div>
+            `;
+            galleryGrid.appendChild(card);
+        });
+    }
+    
+    container.appendChild(galleryGrid);
+}
+
+function renderGalleryManager() {
+    const manager = document.getElementById('galleryManager');
+    if (!manager) return;
+    
+    if (!isAdmin) {
+        manager.innerHTML = `
+            <div style="padding:30px; text-align:center; background:#F9F5EE; border-radius:20px;">
+                <i class="fas fa-lock" style="font-size:48px; color:#999; margin-bottom:15px; display:block;"></i>
+                <h3 style="color:#999;">Mode User</h3>
+                <p>Anda hanya bisa melihat dokumentasi.</p>
+                <p>Login sebagai admin untuk mengelola foto.</p>
+                <button onclick="showLoginModal()" style="margin-top:15px; padding:10px 24px; background:#B47C42; color:white; border:none; border-radius:30px; cursor:pointer;">
+                    <i class="fas fa-user-shield"></i> Login Admin
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    manager.innerHTML = '';
+    
+    const adminSelector = document.createElement('div');
+    adminSelector.style.cssText = `display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;`;
+    
+    const galleryNames = Object.keys(komunitasData.galleries);
+    
+    galleryNames.forEach(name => {
+        const btn = document.createElement('button');
+        btn.textContent = `${name} (${komunitasData.galleries[name].length})`;
+        btn.style.cssText = `padding:6px 18px; border:none; border-radius:30px; cursor:pointer; font-weight:bold; background:${selectedGallery === name ? '#B47C42' : 'white'}; color:${selectedGallery === name ? 'white' : '#4A3520'};`;
+        btn.onclick = () => {
+            selectedGallery = name;
+            renderGalleryManager();
+            renderGallery();
+        };
+        adminSelector.appendChild(btn);
+    });
+    
+    manager.appendChild(adminSelector);
+    
+    const clearAllBtn = document.createElement('button');
+    clearAllBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Hapus Semua Foto';
+    clearAllBtn.style.cssText = `background:#e74c3c; color:white; border:none; padding:10px 20px; border-radius:30px; cursor:pointer; margin-bottom:20px; width:100%; font-weight:bold;`;
+    clearAllBtn.onclick = clearAllPhotos;
+    manager.appendChild(clearAllBtn);
+    
+    const uploadInfo = document.createElement('div');
+    uploadInfo.style.cssText = `background:#E8F5E9; padding:12px; border-radius:12px; margin-bottom:20px; text-align:center; font-size:14px;`;
+    uploadInfo.innerHTML = `<i class="fas fa-cloud-upload-alt"></i> <strong>Upload ke: ${selectedGallery}</strong><br><small>Foto akan dikompres otomatis (max 800px)</small>`;
+    manager.appendChild(uploadInfo);
+    
+    const currentPhotos = komunitasData.galleries[selectedGallery] || [];
+    
+    if (currentPhotos.length === 0) {
+        manager.innerHTML += `<p style="text-align:center; padding:30px; color:#999;">Belum ada foto di galeri "${selectedGallery}"</p>`;
+        return;
+    }
+    
+    currentPhotos.forEach((foto) => {
+        const item = document.createElement('div');
+        item.className = 'gallery-manager-item';
+        item.innerHTML = `
+            <img src="${foto.url}" style="width:60px; height:60px; object-fit:cover; border-radius:10px;">
+            <input type="text" class="caption-input" data-id="${foto.id}" data-gallery="${selectedGallery}" value="${escapeHtml(foto.caption)}" style="flex:2; padding:8px; border-radius:8px; border:1px solid #ddd; font-size:12px;">
+            <button class="delete-photo-btn" data-id="${foto.id}" data-gallery="${selectedGallery}"><i class="fas fa-trash"></i> Hapus</button>
+        `;
+        manager.appendChild(item);
+    });
+    
+    document.querySelectorAll('.caption-input').forEach(input => {
+        input.onchange = async function() {
+            const gallery = this.getAttribute('data-gallery');
+            const id = parseInt(this.getAttribute('data-id'));
+            const foto = komunitasData.galleries[gallery]?.find(f => f.id === id);
+            if (foto) {
+                foto.caption = this.value;
+                await saveData();
+                renderGallery();
+                showNotification('Caption berhasil diupdate!', 'success');
+            }
+        };
+    });
+    
+    document.querySelectorAll('.delete-photo-btn').forEach(btn => {
+        btn.onclick = async function() {
+            const gallery = this.getAttribute('data-gallery');
+            const id = parseInt(this.getAttribute('data-id'));
+            
+            if (confirm(`Hapus foto ini?`)) {
+                const index = komunitasData.galleries[gallery].findIndex(f => f.id === id);
+                if (index !== -1) {
+                    komunitasData.galleries[gallery].splice(index, 1);
+                    await saveData();
+                    renderGallery();
+                    renderGalleryManager();
+                    showNotification('Foto berhasil dihapus!', 'success');
+                }
+            }
+        };
+    });
+}
+
 function renderCoverPhoto() {
     const coverImg = document.getElementById('coverProfileImg');
     if (coverImg) coverImg.src = komunitasData.coverPhoto;
@@ -503,8 +646,9 @@ function renderCoverPhoto() {
 function renderDeskripsi() {
     const div = document.getElementById('deskripsiDisplay');
     if (div) div.innerHTML = komunitasData.deskripsi;
+    
     const ta = document.getElementById('deskripsiText');
-    if (ta) {
+    if (ta && isAdmin) {
         const temp = document.createElement('div');
         temp.innerHTML = komunitasData.deskripsi;
         ta.value = temp.innerText;
@@ -516,25 +660,28 @@ function renderVisiMisi() {
     if (visiDiv) visiDiv.innerHTML = komunitasData.visi;
     const misiDiv = document.getElementById('misiDisplay');
     if (misiDiv) misiDiv.innerHTML = komunitasData.misi;
-    const visiTa = document.getElementById('visiText');
-    if (visiTa) {
-        const temp = document.createElement('div');
-        temp.innerHTML = komunitasData.visi;
-        visiTa.value = temp.innerText.replace(/"/g, '').trim();
-    }
-    const misiTa = document.getElementById('misiText');
-    if (misiTa) {
-        let misiText = '';
-        const temp = document.createElement('div');
-        temp.innerHTML = komunitasData.misi;
-        const items = temp.querySelectorAll('.misi-item');
-        items.forEach(item => {
-            const strong = item.querySelector('strong');
-            const title = strong ? strong.innerText : 'Misi';
-            const text = item.innerText.replace(title, '').trim();
-            misiText += title + ': ' + text + '\n';
-        });
-        misiTa.value = misiText || temp.innerText;
+    
+    if (isAdmin) {
+        const visiTa = document.getElementById('visiText');
+        if (visiTa) {
+            const temp = document.createElement('div');
+            temp.innerHTML = komunitasData.visi;
+            visiTa.value = temp.innerText.replace(/"/g, '').trim();
+        }
+        const misiTa = document.getElementById('misiText');
+        if (misiTa) {
+            let misiText = '';
+            const temp = document.createElement('div');
+            temp.innerHTML = komunitasData.misi;
+            const items = temp.querySelectorAll('.misi-item');
+            items.forEach(item => {
+                const strong = item.querySelector('strong');
+                const title = strong ? strong.innerText : 'Misi';
+                const text = item.innerText.replace(title, '').trim();
+                misiText += title + ': ' + text + '\n';
+            });
+            misiTa.value = misiText || temp.innerText;
+        }
     }
 }
 
@@ -546,16 +693,16 @@ function renderAll() {
     renderGalleryManager();
 }
 
-function deleteCoverPhoto() {
-    if (confirm('Hapus foto cover?')) {
-        komunitasData.coverPhoto = "https://placehold.co/600x300/FCE9C4/B47C42?text=Ilustrasi+PAUD+Mentawai";
-        saveData();
-        renderCoverPhoto();
-        showNotification('Foto cover berhasil dihapus!', 'success');
-    }
-}
+// ============================================
+// EDIT FUNCTIONS
+// ============================================
 
-function saveDeskripsi() {
+async function saveDeskripsi() {
+    if (!isAdmin) {
+        showNotification('Login sebagai admin untuk mengedit deskripsi!', 'warning');
+        return;
+    }
+    
     const text = document.getElementById('deskripsiText').value;
     if (!text.trim()) {
         showNotification('Deskripsi tidak boleh kosong!', 'error');
@@ -569,19 +716,27 @@ function saveDeskripsi() {
         }
     }
     komunitasData.deskripsi = html;
-    saveData();
+    await saveData();
     renderDeskripsi();
     showNotification('Deskripsi berhasil disimpan!', 'success');
 }
 
-function saveVisiMisi() {
+async function saveVisiMisi() {
+    if (!isAdmin) {
+        showNotification('Login sebagai admin untuk mengedit visi & misi!', 'warning');
+        return;
+    }
+    
     const visiText = document.getElementById('visiText').value;
     const misiText = document.getElementById('misiText').value;
+    
     if (!visiText.trim()) {
         showNotification('Visi tidak boleh kosong!', 'error');
         return;
     }
+    
     komunitasData.visi = `<p style="font-size:1.2rem; font-weight:600; background:#F7EAD6; border-radius: 30px; padding: 16px;"><i class="fas fa-quote-left"></i> "${escapeHtml(visiText)}"</p><p>Inti visi: <strong>Anak PAUD menjadi generasi emas yang pintar dan berkarakter Pancasila</strong> dengan semangat budaya Mentawai.</p>`;
+    
     if (misiText.trim()) {
         const lines = misiText.split('\n').filter(l => l.trim());
         let misiHtml = '<div class="grid-misi">';
@@ -597,10 +752,15 @@ function saveVisiMisi() {
         misiHtml += '</div>';
         komunitasData.misi = misiHtml;
     }
-    saveData();
+    
+    await saveData();
     renderVisiMisi();
     showNotification('Visi & Misi berhasil disimpan!', 'success');
 }
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
 
 function escapeHtml(str) {
     if (!str) return '';
@@ -612,24 +772,54 @@ function escapeHtml(str) {
     });
 }
 
+function showLoading(show, message = 'Loading...') {
+    let loader = document.getElementById('globalLoader');
+    if (!loader && show) {
+        loader = document.createElement('div');
+        loader.id = 'globalLoader';
+        loader.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2rem;
+            flex-direction: column;
+            gap: 15px;
+        `;
+        loader.innerHTML = `<i class="fas fa-spinner fa-pulse fa-2x"></i><span>${message}</span>`;
+        document.body.appendChild(loader);
+    } else if (loader && !show) {
+        loader.remove();
+    }
+}
+
 function showNotification(message, type) {
     const oldNotif = document.querySelector('.custom-notification');
     if (oldNotif) oldNotif.remove();
+    
     const notif = document.createElement('div');
     notif.className = 'custom-notification';
     let bgColor = '#27ae60';
     if (type === 'error') bgColor = '#e74c3c';
     if (type === 'info') bgColor = '#3498db';
+    if (type === 'warning') bgColor = '#f39c12';
+    
     notif.style.cssText = `
         position: fixed;
-        bottom: 80px;
-        right: 20px;
+        bottom: 30px;
+        right: 30px;
         background: ${bgColor};
         color: white;
         padding: 12px 24px;
         border-radius: 50px;
-        z-index: 1003;
-        font-family: 'Quicksand', sans-serif;
+        z-index: 2000;
         font-weight: bold;
         box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         animation: slideInRight 0.3s ease;
@@ -638,6 +828,7 @@ function showNotification(message, type) {
     `;
     notif.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
     document.body.appendChild(notif);
+    
     setTimeout(() => {
         notif.style.animation = 'slideOutRight 0.3s ease';
         setTimeout(() => notif.remove(), 300);
@@ -645,15 +836,7 @@ function showNotification(message, type) {
 }
 
 function openLightbox(src) {
-    let lightbox = document.getElementById('lightbox');
-    if (!lightbox) {
-        lightbox = document.createElement('div');
-        lightbox.id = 'lightbox';
-        lightbox.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; display:flex; justify-content:center; align-items:center; cursor:pointer;`;
-        lightbox.innerHTML = '<img id="lightboxImg" style="max-width:90%; max-height:90%; object-fit:contain;">';
-        lightbox.onclick = closeLightbox;
-        document.body.appendChild(lightbox);
-    }
+    const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightboxImg');
     if (lightboxImg) lightboxImg.src = src;
     lightbox.style.display = 'flex';
@@ -662,7 +845,7 @@ function openLightbox(src) {
 
 function closeLightbox() {
     const lightbox = document.getElementById('lightbox');
-    if (lightbox) lightbox.style.display = 'none';
+    lightbox.style.display = 'none';
     document.body.style.overflow = '';
 }
 
@@ -674,6 +857,7 @@ function showPage(pageId) {
     }
     const active = document.getElementById(`${pageId}-page`);
     if (active) active.classList.add('active-page');
+    
     const btns = document.querySelectorAll('.nav-btn');
     for (let btn of btns) {
         if (btn.getAttribute('data-page') === pageId) {
@@ -688,50 +872,83 @@ function showPage(pageId) {
 // ============================================
 // INITIALIZATION
 // ============================================
-document.addEventListener('DOMContentLoaded', function() {
-    loadData();
-    renderAll();
+
+document.addEventListener('DOMContentLoaded', async function() {
+    checkAdminStatus();
+    await loadDataFromServer();
     
-    document.querySelectorAll('.nav-btn').forEach(btn => {
+    // Navigasi
+    const navBtns = document.querySelectorAll('.nav-btn');
+    for (let btn of navBtns) {
         btn.onclick = () => showPage(btn.getAttribute('data-page'));
-    });
+    }
     
     const toDesk = document.getElementById('toDeskBtn');
     if (toDesk) toDesk.onclick = () => showPage('deskripsi');
+    
     const toGal = document.getElementById('toGalBtn');
     if (toGal) toGal.onclick = () => showPage('dokumentasi');
     
-    const toggle = document.getElementById('adminToggleBtn');
-    const panel = document.getElementById('adminPanel');
-    const close = document.getElementById('closeAdminBtn');
-    if (toggle) toggle.onclick = () => panel.classList.toggle('open');
-    if (close) close.onclick = () => panel.classList.remove('open');
+    // Admin Panel Toggle
+    const adminToggle = document.getElementById('adminToggleBtn');
+    const adminPanel = document.getElementById('adminPanel');
+    const closeAdminBtn = document.getElementById('closeAdminBtn');
     
-    document.querySelectorAll('.admin-tab').forEach(tab => {
+    if (adminToggle) {
+        adminToggle.onclick = () => {
+            if (!isAdmin) {
+                showLoginModal();
+            } else {
+                adminPanel.classList.toggle('open');
+            }
+        };
+    }
+    
+    if (closeAdminBtn) {
+        closeAdminBtn.onclick = () => adminPanel.classList.remove('open');
+    }
+    
+    document.addEventListener('click', function(event) {
+        if (adminPanel && adminPanel.classList.contains('open')) {
+            if (!adminPanel.contains(event.target) && !adminToggle.contains(event.target)) {
+                adminPanel.classList.remove('open');
+            }
+        }
+    });
+    
+    // Admin Tabs
+    const tabs = document.querySelectorAll('.admin-tab');
+    for (let tab of tabs) {
         tab.onclick = function() {
-            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            for (let t of tabs) t.classList.remove('active');
             this.classList.add('active');
-            document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
+            const contents = document.querySelectorAll('.admin-tab-content');
+            for (let c of contents) c.classList.remove('active');
             const target = document.getElementById(`tab-${this.getAttribute('data-tab')}`);
             if (target) target.classList.add('active');
             if (this.getAttribute('data-tab') === 'dokumentasi') renderGalleryManager();
         };
-    });
+    }
     
+    // Cover buttons
     const saveCover = document.getElementById('saveCoverBtn');
-    if (saveCover) saveCover.onclick = () => {
-        const file = document.getElementById('coverUpload')?.files[0];
-        file ? uploadCoverPhoto(file) : showNotification('Pilih file foto dulu!', 'error');
-    };
+    if (saveCover) {
+        saveCover.onclick = () => {
+            const file = document.getElementById('coverUpload')?.files[0];
+            file ? uploadCoverPhoto(file) : showNotification('Pilih file foto dulu!', 'error');
+        };
+    }
+    
     const deleteCover = document.getElementById('deleteCoverBtn');
     if (deleteCover) deleteCover.onclick = deleteCoverPhoto;
     
+    // Dokumentasi upload
     const addPhotos = document.getElementById('addPhotosBtn');
     if (addPhotos) {
         addPhotos.onclick = () => {
             const files = document.getElementById('docUpload')?.files;
             if (files && files.length > 0) {
-                if (confirm(`Upload ${files.length} foto ke galeri "${selectedGallery}"?\n\nFoto akan dikompres otomatis.`)) {
+                if (confirm(`Upload ${files.length} foto ke galeri "${selectedGallery}"?`)) {
                     uploadDokumentasi(files);
                 }
             } else {
@@ -740,10 +957,16 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     
+    // Save buttons
     const saveDesc = document.getElementById('saveDeskripsiBtn');
     if (saveDesc) saveDesc.onclick = saveDeskripsi;
+    
     const saveVM = document.getElementById('saveVisimisiBtn');
     if (saveVM) saveVM.onclick = saveVisiMisi;
+    
+    // Lightbox
+    const lightbox = document.getElementById('lightbox');
+    if (lightbox) lightbox.onclick = closeLightbox;
     
     document.onkeydown = (e) => { if (e.key === 'Escape') closeLightbox(); };
     
@@ -752,25 +975,25 @@ document.addEventListener('DOMContentLoaded', function() {
         if (nav) nav.classList.toggle('scrolled', window.scrollY > 50);
     };
     
-    // Tambahkan tombol cek storage
-    const storageCheckBtn = document.createElement('button');
-    storageCheckBtn.innerHTML = '<i class="fas fa-database"></i> Cek Storage';
-    storageCheckBtn.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        left: 20px;
-        background: #4A3520;
-        color: white;
-        border: none;
-        padding: 8px 15px;
-        border-radius: 30px;
-        cursor: pointer;
-        z-index: 999;
-        font-size: 12px;
-        opacity: 0.7;
-    `;
-    storageCheckBtn.onclick = checkStorageSize;
-    document.body.appendChild(storageCheckBtn);
+    addDecorations();
     
-    console.log("✅ Website siap! Foto akan dikompres otomatis agar tidak hilang.");
+    console.log(`✅ Website siap! Mode: ${isAdmin ? 'ADMIN' : 'USER'}`);
 });
+
+function addDecorations() {
+    if (document.querySelector('.decor-leaf')) return;
+    
+    const decorLeft = document.createElement('div');
+    decorLeft.className = 'decor-leaf';
+    decorLeft.innerHTML = '🌿🍃🌱';
+    document.body.appendChild(decorLeft);
+    
+    const decorRight = document.createElement('div');
+    decorRight.className = 'decor-leaf-right';
+    decorRight.innerHTML = '🌺🌸🌼';
+    document.body.appendChild(decorRight);
+}
+
+// Export fungsi untuk global (agar bisa dipanggil dari HTML)
+window.showLoginModal = showLoginModal;
+

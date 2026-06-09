@@ -1,147 +1,168 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>KOMBEL PAUD Karamen Simaeruk | Mentawai</title>
-  <!-- Google Fonts & Font Awesome -->
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Kombel PAUD Karamen Simaeruk - Mentawai</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS External -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- Tombol Admin Panel -->
-<button id="adminToggleBtn" class="admin-toggle">
-  <i class="fas fa-user-shield"></i> Admin Panel
-</button>
-
-<!-- Admin Panel Sidebar -->
-<div id="adminPanel" class="admin-panel">
-  <div class="admin-header">
-    <h3><i class="fas fa-crown"></i> Panel Admin</h3>
-    <button id="closeAdminBtn" class="close-admin">&times;</button>
-  </div>
-  <div class="admin-tabs">
-    <button class="admin-tab active" data-tab="profil">Foto Profil</button>
-    <button class="admin-tab" data-tab="deskripsi">Deskripsi</button>
-    <button class="admin-tab" data-tab="visimisi">Visi & Misi</button>
-    <button class="admin-tab" data-tab="dokumentasi">Dokumentasi</button>
-  </div>
-  
-  <div class="admin-content">
-    <!-- Tab Foto Profil -->
-    <div id="tab-profil" class="admin-tab-content active">
-      <h4>Foto Profil Cover</h4>
-      <div class="current-photo">
-        <img id="currentCoverImg" src="https://placehold.co/600x300/FCE9C4/B47C42?text=Ilustrasi+PAUD+Mentawai" alt="Foto Profil">
-      </div>
-      <input type="file" id="coverUpload" accept="image/*">
-      <div style="display: flex; gap: 10px; margin-top: 10px;">
-        <button id="saveCoverBtn" class="admin-save"><i class="fas fa-save"></i> Simpan</button>
-        <button id="deleteCoverBtn" class="admin-delete"><i class="fas fa-trash"></i> Hapus Cover</button>
-      </div>
-      <p class="admin-note">Ukuran yang disarankan: 600x300 pixel</p>
-    </div>
-    
-    <!-- Tab Deskripsi -->
-    <div id="tab-deskripsi" class="admin-tab-content">
-      <h4>Edit Deskripsi Komunitas</h4>
-      <textarea id="deskripsiText" rows="12" placeholder="Tulis deskripsi komunitas di sini..."></textarea>
-      <button id="saveDeskripsiBtn" class="admin-save"><i class="fas fa-save"></i> Simpan Deskripsi</button>
-    </div>
-    
-    <!-- Tab Visi & Misi -->
-    <div id="tab-visimisi" class="admin-tab-content">
-      <h4>Edit Visi</h4>
-      <textarea id="visiText" rows="3" placeholder="Visi komunitas..."></textarea>
-      <h4 style="margin-top: 20px;">Edit Misi (pisahkan dengan baris baru, format: Judul: Deskripsi)</h4>
-      <textarea id="misiText" rows="8" placeholder="Pengembangan Kompetensi Pendidik: Meningkatkan profesionalisme guru&#10;Peningkatan Kualitas Pembelajaran: Memfasilitasi kurikulum inovatif"></textarea>
-      <button id="saveVisimisiBtn" class="admin-save"><i class="fas fa-save"></i> Simpan Visi & Misi</button>
-    </div>
-    
-    <!-- Tab Dokumentasi -->
-    <div id="tab-dokumentasi" class="admin-tab-content">
-      <h4>Tambah Foto Dokumentasi</h4>
-      <input type="file" id="docUpload" accept="image/*" multiple>
-      <button id="addPhotosBtn" class="admin-save"><i class="fas fa-plus"></i> Tambah Foto</button>
-      <hr>
-      <h4>Daftar Foto Dokumentasi</h4>
-      <div id="galleryManager" class="gallery-manager"></div>
-    </div>
-  </div>
-</div>
-
+<!-- ============================================ -->
+<!-- NAVIGASI -->
+<!-- ============================================ -->
 <nav>
-  <div class="logo">
-    <h2><i class="fas fa-chalkboard-user"></i> KOMBEL PAUD</h2>
-    <p>Karamen Simaeruk · Mentawai</p>
-  </div>
-  <div class="nav-links">
-    <button data-page="cover" class="nav-btn active">Beranda</button>
-    <button data-page="deskripsi" class="nav-btn">Deskripsi</button>
-    <button data-page="visimisi" class="nav-btn">Visi & Misi</button>
-    <button data-page="dokumentasi" class="nav-btn">Dokumentasi</button>
-  </div>
+    <div class="nav-container">
+        <button class="nav-btn active" data-page="cover">
+            <i class="fas fa-home"></i> <span>Beranda</span>
+        </button>
+        <button class="nav-btn" data-page="deskripsi">
+            <i class="fas fa-align-left"></i> <span>Deskripsi</span>
+        </button>
+        <button class="nav-btn" data-page="visimisi">
+            <i class="fas fa-bullseye"></i> <span>Visi & Misi</span>
+        </button>
+        <button class="nav-btn" data-page="dokumentasi">
+            <i class="fas fa-images"></i> <span>Dokumentasi</span>
+        </button>
+    </div>
 </nav>
 
-<div class="pages-container" id="pagesContainer">
-  <!-- HALAMAN COVER -->
-  <div id="cover-page" class="page active-page">
-    <div class="hero-cover">
-      <div class="cover-icon">
-        <i class="fas fa-hands-clapping"></i> <i class="fas fa-tree"></i> <i class="fas fa-child"></i>
-      </div>
-      <h1>Komunitas Belajar (KOMBEL) PAUD<br> Karamen Simaeruk</h1>
-      <p class="sub"><i class="fas fa-feather-alt"></i> Menari di Atas Akar Budaya Mentawai, Menyemai Generasi Emas</p>
-      <div class="button-group">
-        <button class="btn-explore" id="toDeskBtn">✨ Jelajahi Komunitas</button>
-        <button class="btn-explore" id="toGalBtn">📸 Lihat Dokumentasi</button>
-      </div>
-      <div style="margin-top: 45px;">
-        <img id="coverProfileImg" src="https://placehold.co/600x300/FCE9C4/B47C42?text=Ilustrasi+PAUD+Mentawai" alt="Foto Profil PAUD" class="hero-img">
-        <p style="margin-top: 20px; font-style:italic;">"Sikerei ceria, anak belajar sambil bermain di alam"</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- HALAMAN DESKRIPSI -->
-  <div id="deskripsi-page" class="page">
-    <div class="card-content">
-      <h2><i class="fas fa-community"></i> ᨒ Tentang Komunitas Belajar PAUD Karamen Simaeruk</h2>
-      <div id="deskripsiDisplay" class="deskripsi-content"></div>
-    </div>
-  </div>
-
-  <!-- HALAMAN VISI DAN MISI -->
-  <div id="visimisi-page" class="page">
-    <div class="card-content">
-      <h2><i class="fas fa-eye"></i> Visi Komunitas</h2>
-      <div id="visiDisplay" class="visi-content"></div>
-      <br>
-      <h2><i class="fas fa-bullhorn"></i> Misi Utama</h2>
-      <div id="misiDisplay" class="misi-content"></div>
-    </div>
-  </div>
-
-  <!-- HALAMAN DOKUMENTASI -->
-  <div id="dokumentasi-page" class="page">
-    <div class="container">
-        <h2>Dokumentasi Kegiatan</h2>
-        <div id="galleryContainer"></div>
-    </div>
-</div>
+<!-- ============================================ -->
+<!-- INDIKATOR ADMIN -->
+<!-- ============================================ -->
+<div id="adminIndicator" class="admin-indicator user-mode">
+    <i class="fas fa-user"></i> Mode User
 </div>
 
-<footer>
-  <i class="fas fa-drumstick-bite"></i> Komunitas Belajar PAUD Karamen Simaeruk | Berlandaskan Gotong Royong & Alam Mentawai <i class="fas fa-feather"></i>
-</footer>
+<!-- ============================================ -->
+<!-- TOMBOL ADMIN TOGGLE -->
+<!-- ============================================ -->
+<button id="adminToggleBtn" class="admin-toggle-btn">
+    <i class="fas fa-user-shield"></i>
+</button>
 
-<!-- Lightbox preview -->
-<div id="lightbox" class="lightbox">
-  <img id="lightboxImg" src="" alt="Preview Foto">
+<!-- ============================================ -->
+<!-- PANEL ADMIN -->
+<!-- ============================================ -->
+<div id="adminPanel" class="admin-panel">
+    <div class="admin-panel-header">
+        <h3><i class="fas fa-cog"></i> Panel Admin</h3>
+        <button id="closeAdminBtn" class="close-admin-btn">&times;</button>
+    </div>
+    <div class="admin-panel-content">
+        <div class="admin-tabs">
+            <button class="admin-tab active" data-tab="cover">Cover</button>
+            <button class="admin-tab" data-tab="deskripsi">Deskripsi</button>
+            <button class="admin-tab" data-tab="visimisi">Visi & Misi</button>
+            <button class="admin-tab" data-tab="dokumentasi">Dokumentasi</button>
+        </div>
+        
+        <!-- Tab Cover -->
+        <div id="tab-cover" class="admin-tab-content active">
+            <h4><i class="fas fa-image"></i> Ganti Foto Cover</h4>
+            <input type="file" id="coverUpload" accept="image/*" class="file-input">
+            <div class="button-group">
+                <button id="saveCoverBtn" class="btn btn-primary"><i class="fas fa-upload"></i> Upload</button>
+                <button id="deleteCoverBtn" class="btn btn-danger"><i class="fas fa-trash"></i> Hapus</button>
+            </div>
+            <div style="margin-top:15px;">
+                <img id="currentCoverImg" style="width:100%; border-radius:10px;">
+            </div>
+        </div>
+        
+        <!-- Tab Deskripsi -->
+        <div id="tab-deskripsi" class="admin-tab-content">
+            <h4><i class="fas fa-edit"></i> Edit Deskripsi</h4>
+            <textarea id="deskripsiText" rows="10" class="form-textarea" placeholder="Tulis deskripsi komunitas di sini..."></textarea>
+            <button id="saveDeskripsiBtn" class="btn btn-success"><i class="fas fa-save"></i> Simpan Deskripsi</button>
+        </div>
+        
+        <!-- Tab Visi Misi -->
+        <div id="tab-visimisi" class="admin-tab-content">
+            <h4><i class="fas fa-eye"></i> Edit Visi</h4>
+            <textarea id="visiText" rows="3" class="form-textarea" placeholder="Tulis visi komunitas di sini..."></textarea>
+            <h4 style="margin-top:15px;"><i class="fas fa-list"></i> Edit Misi</h4>
+            <textarea id="misiText" rows="6" class="form-textarea" placeholder="Tulis misi, pisahkan dengan enter (contoh: Misi 1: Deskripsi misi)"></textarea>
+            <button id="saveVisimisiBtn" class="btn btn-success"><i class="fas fa-save"></i> Simpan Visi & Misi</button>
+        </div>
+        
+        <!-- Tab Dokumentasi -->
+        <div id="tab-dokumentasi" class="admin-tab-content">
+            <h4><i class="fas fa-plus-circle"></i> Tambah Foto</h4>
+            <input type="file" id="docUpload" accept="image/*" multiple class="file-input">
+            <button id="addPhotosBtn" class="btn btn-primary"><i class="fas fa-cloud-upload-alt"></i> Upload Foto</button>
+            <div id="galleryManager" style="margin-top:20px;"></div>
+        </div>
+    </div>
 </div>
 
+<!-- ============================================ -->
+<!-- KONTEN HALAMAN -->
+<!-- ============================================ -->
+<main class="container">
+    <!-- Halaman Cover -->
+    <div id="cover-page" class="page active-page">
+        <div class="hero-section">
+            <div class="cover-photo-container">
+                <img id="coverProfileImg" class="cover-photo" src="https://placehold.co/600x300/FCE9C4/B47C42?text=Ilustrasi+PAUD+Mentawai" alt="Cover PAUD">
+            </div>
+            <div class="hero-content">
+                <h1>Gugus PAUD Karamen Simaeruk</h1>
+                <p class="tagline">Bersatu dalam Perbedaan, Membangun Generasi Emas</p>
+                <div class="hero-buttons">
+                    <button id="toDeskBtn" class="btn-hero"><i class="fas fa-info-circle"></i> Tentang Kami</button>
+                    <button id="toGalBtn" class="btn-hero-outline"><i class="fas fa-images"></i> Galeri Foto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Halaman Deskripsi -->
+    <div id="deskripsi-page" class="page">
+        <div class="section-card">
+            <h2><i class="fas fa-align-left"></i> Deskripsi Komunitas</h2>
+            <div id="deskripsiDisplay" class="deskripsi-content"></div>
+        </div>
+    </div>
+
+    <!-- Halaman Visi & Misi -->
+    <div id="visimisi-page" class="page">
+        <div class="section-card">
+            <h2><i class="fas fa-eye"></i> Visi</h2>
+            <div id="visiDisplay" class="visi-content"></div>
+        </div>
+        <div class="section-card">
+            <h2><i class="fas fa-list"></i> Misi</h2>
+            <div id="misiDisplay" class="misi-content"></div>
+        </div>
+    </div>
+
+    <!-- Halaman Dokumentasi -->
+    <div id="dokumentasi-page" class="page">
+        <div class="section-card">
+            <h2><i class="fas fa-images"></i> Dokumentasi Kegiatan</h2>
+            <div id="galleryContainer"></div>
+        </div>
+    </div>
+</main>
+
+<!-- ============================================ -->
+<!-- LIGHTBOX -->
+<!-- ============================================ -->
+<div id="lightbox" class="lightbox" style="display:none;">
+    <img id="lightboxImg" class="lightbox-img">
+</div>
+
+<!-- JavaScript External -->
 <script src="app.js"></script>
 </body>
 </html>
