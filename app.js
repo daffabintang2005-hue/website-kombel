@@ -1,113 +1,61 @@
 // ============================================
 // KOMBEL PAUD KARAMEN SIMAERUK
-// UPLOAD SIZE: MAX 500 MB (bebas untuk ukuran lebih kecil)
+// FULLY UPDATED - UPLOAD LANGSUNG MUNCUL
 // ============================================
 
-// Data default
+// Data default dengan multiple gallery
 let komunitasData = {
     coverPhoto: "https://placehold.co/600x300/FCE9C4/B47C42?text=Ilustrasi+PAUD+Mentawai",
     deskripsi: `<p><strong>Gugus PAUD Karamen Simaeruk</strong> adalah wadah koordinasi dan kerja sama antar satuan PAUD (TK, KB, TPA, SPS) di Kecamatan Karamen, Kepulauan Mentawai. Terinspirasi dari filosofi "Simaeruk" (bersatu dalam perbedaan), komunitas ini menjadi "rumah belajar" bagi para pendidik PAUD serta kepala sekolah untuk saling berbagi praktik baik, mengembangkan program bersama, dan meningkatkan mutu layanan anak usia dini.</p><br><p>Sebagai bagian dari penguatan <strong>Pusat Kegiatan Gugus (PKG) PAUD</strong>, kami mewadahi pembinaan profesionalitas guru secara terencana, koordinasi antarlembaga, serta pengembangan kurikulum yang kontekstual dengan budaya Mentawai.</p><br><div style="background: #EFE2CC; border-radius: 28px; padding: 20px;"><i class="fas fa-star-of-life"></i> <strong>Fungsi Utama Komunitas:</strong><ul style="margin-top: 12px; list-style-type: none;"><li>✓ Wadah Pembinaan & peningkatan kompetensi pendidik PAUD</li><li>✓ Pusat Koordinasi berbagi informasi & sumber daya antar lembaga</li><li>✓ Pengembangan Kurikulum bermuatan budaya Mentawai & standar mutu</li><li>✓ Kolaborasi bersama Dinas Pendidikan dan mitra orang tua</li></ul></div>`,
     visi: `<p style="font-size:1.2rem; font-weight:600; background:#F7EAD6; border-radius: 30px; padding: 16px;"><i class="fas fa-quote-left"></i> "Terwujudnya Gugus PAUD yang unggul, berkarakter, dan berdaya saing untuk membentuk generasi emas Indonesia yang cerdas, kreatif, dan berakhlak mulia"</p><p>Inti visi: <strong>Anak PAUD menjadi generasi emas yang pintar dan berkarakter Pancasila</strong> dengan semangat budaya Mentawai.</p>`,
     misi: `<div class="grid-misi"><div class="misi-item"><i class="fas fa-chalkboard-user"></i> <strong>Pengembangan Kompetensi Pendidik</strong><br>Meningkatkan profesionalisme guru melalui Kelompok Kerja Guru (KKG) dan pelatihan manajerial.</div><div class="misi-item"><i class="fas fa-book-open"></i> <strong>Peningkatan Kualitas Pembelajaran</strong><br>Memfasilitasi kurikulum inovatif, metode kreatif, dan alat penilaian sesuai tumbuh kembang anak.</div><div class="misi-item"><i class="fas fa-building"></i> <strong>Pengelolaan Kelembagaan</strong><br>Koordinasi administrasi PAUD yang tertib, akuntabel, dan berstandar nasional.</div><div class="misi-item"><i class="fas fa-handshake"></i> <strong>Kemitraan & Komunikasi</strong><br>Kolaborasi antara sekolah, orang tua, masyarakat, dan pemerintah.</div><div class="misi-item"><i class="fas fa-heart"></i> <strong>Pembentukan Karakter Anak</strong><br>Penanaman nilai jujur, disiplin, gotong royong, toleransi, serta kearifan lokal Mentawai.</div><div class="misi-item"><i class="fas fa-leaf"></i> <strong>PAUD Holistik Integratif</strong><br>Perhatian pada gizi, kesehatan, pengasuhan, dan perlindungan anak di lingkungan sekolah.</div></div>`,
-    gallery: []
+    galleries: {
+        "Kegiatan Belajar": [],
+        "Ekstrakurikuler": [],
+        "Acara Penting": [],
+        "Prestasi": [],
+        "Lainnya": []
+    }
 };
 
-// Konfigurasi upload
-const MAX_FILE_SIZE_MB = 500; // 500 MB
+// Konfigurasi
+const MAX_FILE_SIZE_MB = 500;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+let selectedGallery = "Kegiatan Belajar";
 
-// Load data dari LocalStorage dengan validasi
+// ============================================
+// LOAD & SAVE DATA
+// ============================================
 function loadData() {
     const savedData = localStorage.getItem('komunitasPAUD');
     if (savedData) {
         try {
             const parsed = JSON.parse(savedData);
-            if (parsed && Array.isArray(parsed.gallery)) {
+            if (parsed && parsed.galleries) {
                 komunitasData = parsed;
-                // Pastikan setiap foto memiliki ID yang valid
-                komunitasData.gallery = komunitasData.gallery.filter(foto => foto && foto.id);
-                // Re-assign ID jika ada yang duplikat
-                const ids = new Set();
-                komunitasData.gallery = komunitasData.gallery.filter(foto => {
-                    if (ids.has(foto.id)) {
-                        foto.id = Date.now() + Math.floor(Math.random() * 100000);
-                    }
-                    ids.add(foto.id);
-                    return true;
-                });
-            } else if (parsed) {
-                komunitasData = { ...komunitasData, ...parsed };
-                if (!Array.isArray(komunitasData.gallery)) {
-                    komunitasData.gallery = [];
-                }
             }
         } catch(e) {
-            console.error('Error parsing saved data:', e);
-            komunitasData.gallery = [];
+            console.error('Error:', e);
         }
     }
     
-    // Jika gallery kosong, tambahkan default
-    if (komunitasData.gallery.length === 0) {
-        for (let i = 1; i <= 4; i++) {
-            komunitasData.gallery.push({
-                id: Date.now() + i,
-                url: `https://placehold.co/400x400/E7C994/9C6A3A?text=Foto+PAUD+${i}`,
-                caption: `Kegiatan PAUD ${i}`
-            });
+    const defaultGalleries = ["Kegiatan Belajar", "Ekstrakurikuler", "Acara Penting", "Prestasi", "Lainnya"];
+    defaultGalleries.forEach(gallery => {
+        if (!komunitasData.galleries[gallery]) {
+            komunitasData.galleries[gallery] = [];
         }
-        saveData();
-    }
+    });
+    
+    saveData();
 }
 
-// Fungsi simpan ke LocalStorage
 function saveData() {
     localStorage.setItem('komunitasPAUD', JSON.stringify(komunitasData));
-    console.log("Data tersimpan, jumlah gallery:", komunitasData.gallery.length);
+    console.log("Data tersimpan");
 }
 
 // ============================================
-// FUNGSI UPLOAD COVER - MAX 500 MB
-// ============================================
-function uploadCoverPhoto(file) {
-    if (!file) {
-        showNotification('Pilih file terlebih dahulu!', 'error');
-        return;
-    }
-    
-    // Validasi tipe file
-    if (!file.type.startsWith('image/')) {
-        showNotification('Harap pilih file gambar!', 'error');
-        return;
-    }
-    
-    // Validasi ukuran file (max 500 MB)
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        showNotification(`Ukuran file terlalu besar! (${fileSizeMB} MB). Maksimal ${MAX_FILE_SIZE_MB} MB!`, 'error');
-        return;
-    }
-    
-    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-    console.log(`Upload cover: ${file.name}, ukuran: ${fileSizeMB} MB`);
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        komunitasData.coverPhoto = e.target.result;
-        saveData();
-        renderCoverPhoto();
-        showNotification(`Foto cover berhasil diupdate! (${fileSizeMB} MB)`, 'success');
-        const coverUpload = document.getElementById('coverUpload');
-        if (coverUpload) coverUpload.value = '';
-    };
-    reader.onerror = function() {
-        showNotification('Gagal membaca file!', 'error');
-    };
-    reader.readAsDataURL(file);
-}
-
-// ============================================
-// FUNGSI UPLOAD DOKUMENTASI - MAX 500 MB per file
+// UPLOAD DOKUMENTASI
 // ============================================
 function uploadDokumentasi(files) {
     if (!files || files.length === 0) {
@@ -115,83 +63,192 @@ function uploadDokumentasi(files) {
         return;
     }
     
-    let count = 0;
+    let processed = 0;
     let successCount = 0;
     const total = files.length;
     
-    for (let file of files) {
-        // Validasi tipe file
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
         if (!file.type.startsWith('image/')) {
             showNotification(`File ${file.name} bukan gambar!`, 'error');
-            count++;
-            if (count === total) {
-                const docUpload = document.getElementById('docUpload');
-                if (docUpload) docUpload.value = '';
-                if (successCount > 0) {
-                    showNotification(`${successCount} foto berhasil ditambahkan!`, 'success');
-                }
-            }
+            processed++;
+            checkComplete(processed, total, successCount);
             continue;
         }
         
-        // Validasi ukuran file (max 500 MB)
         if (file.size > MAX_FILE_SIZE_BYTES) {
-            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-            showNotification(`File ${file.name} terlalu besar (${fileSizeMB} MB)! Maksimal ${MAX_FILE_SIZE_MB} MB`, 'error');
-            count++;
-            if (count === total) {
-                const docUpload = document.getElementById('docUpload');
-                if (docUpload) docUpload.value = '';
-                if (successCount > 0) {
-                    showNotification(`${successCount} foto berhasil ditambahkan!`, 'success');
-                }
-            }
+            showNotification(`File ${file.name} terlalu besar!`, 'error');
+            processed++;
+            checkComplete(processed, total, successCount);
             continue;
         }
-        
-        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        console.log(`Upload dokumentasi: ${file.name}, ukuran: ${fileSizeMB} MB`);
         
         const reader = new FileReader();
-        reader.onload = function(e) {
-            const newId = Date.now() + Math.floor(Math.random() * 100000) + count;
-            const caption = prompt('Masukkan caption untuk foto ini:', `Kegiatan PAUD Karamen Simaeruk (${fileSizeMB} MB)`);
-            
-            komunitasData.gallery.push({
-                id: newId,
-                url: e.target.result,
-                caption: caption || `Kegiatan PAUD (${fileSizeMB} MB)`
-            });
-            
-            count++;
-            successCount++;
-            
-            if (count === total) {
+        
+        reader.onload = (function(file, galleryName) {
+            return function(e) {
+                const newId = Date.now() + Math.floor(Math.random() * 100000) + processed;
+                const caption = prompt(`Caption untuk: ${file.name}`, `Foto - ${galleryName}`);
+                
+                if (!komunitasData.galleries[galleryName]) {
+                    komunitasData.galleries[galleryName] = [];
+                }
+                
+                komunitasData.galleries[galleryName].push({
+                    id: newId,
+                    url: e.target.result,
+                    caption: caption || `Foto ${galleryName}`,
+                    uploadedAt: new Date().toISOString()
+                });
+                
+                processed++;
+                successCount++;
+                
                 saveData();
+                
+                // LANGSUNG RENDER ULANG
                 renderGallery();
                 renderGalleryManager();
-                showNotification(`${successCount} dari ${total} foto berhasil ditambahkan!`, 'success');
-                const docUpload = document.getElementById('docUpload');
-                if (docUpload) docUpload.value = '';
-            }
-        };
-        reader.onerror = function() {
-            showNotification(`Gagal membaca file ${file.name}!`, 'error');
-            count++;
-            if (count === total) {
-                const docUpload = document.getElementById('docUpload');
-                if (docUpload) docUpload.value = '';
-                if (successCount > 0) {
-                    showNotification(`${successCount} foto berhasil ditambahkan!`, 'success');
-                }
-            }
-        };
+                
+                checkComplete(processed, total, successCount);
+            };
+        })(file, selectedGallery);
+        
+        reader.onerror = (function(fileName) {
+            return function() {
+                showNotification(`Gagal membaca file ${fileName}!`, 'error');
+                processed++;
+                checkComplete(processed, total, successCount);
+            };
+        })(file.name);
+        
         reader.readAsDataURL(file);
     }
 }
 
+function checkComplete(processed, total, successCount) {
+    if (processed === total && successCount > 0) {
+        showNotification(`${successCount} foto berhasil ditambahkan ke "${selectedGallery}"!`, 'success');
+        const docUpload = document.getElementById('docUpload');
+        if (docUpload) docUpload.value = '';
+    }
+}
+
 // ============================================
-// FUNGSI RENDER GALLERY MANAGER
+// RENDER GALERI UTAMA
+// ============================================
+function renderGallery() {
+    // Cari container dengan berbagai kemungkinan ID
+    let container = document.getElementById('galleryContainer');
+    if (!container) container = document.getElementById('galleryGrid');
+    if (!container) container = document.getElementById('dokumentasiGrid');
+    if (!container) container = document.querySelector('.gallery-grid');
+    if (!container) container = document.querySelector('#dokumentasi-page .gallery');
+    
+    if (!container) {
+        console.error("Container galeri tidak ditemukan!");
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    // Selector Galeri
+    const selectorDiv = document.createElement('div');
+    selectorDiv.className = 'gallery-selector';
+    selectorDiv.style.cssText = `
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 30px;
+        padding: 15px;
+        background: #F7EAD6;
+        border-radius: 60px;
+        justify-content: center;
+    `;
+    
+    const galleryNames = Object.keys(komunitasData.galleries);
+    
+    galleryNames.forEach(name => {
+        const btn = document.createElement('button');
+        const fotoCount = komunitasData.galleries[name].length;
+        btn.textContent = `${name} (${fotoCount})`;
+        btn.style.cssText = `
+            padding: 10px 24px;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            background: ${selectedGallery === name ? '#B47C42' : '#FFFFFF'};
+            color: ${selectedGallery === name ? '#FFFFFF' : '#4A3520'};
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        `;
+        btn.onclick = () => {
+            selectedGallery = name;
+            renderGallery();
+            renderGalleryManager();
+        };
+        selectorDiv.appendChild(btn);
+    });
+    
+    container.appendChild(selectorDiv);
+    
+    // Grid Foto
+    const galleryGrid = document.createElement('div');
+    galleryGrid.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 25px;
+        padding: 10px;
+    `;
+    
+    const currentPhotos = komunitasData.galleries[selectedGallery] || [];
+    
+    if (currentPhotos.length === 0) {
+        galleryGrid.innerHTML = `
+            <div style="grid-column:1/-1; text-align:center; padding:60px; background:#F9F5EE; border-radius:20px;">
+                <i class="fas fa-images" style="font-size:48px; color:#B47C42; margin-bottom:15px; display:block;"></i>
+                <h3>Belum ada foto di "${selectedGallery}"</h3>
+                <p>Silakan upload foto melalui Admin Panel</p>
+            </div>
+        `;
+    } else {
+        currentPhotos.forEach((foto) => {
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: white;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+                cursor: pointer;
+                transition: transform 0.3s, box-shadow 0.3s;
+            `;
+            card.onmouseenter = () => {
+                card.style.transform = 'translateY(-5px)';
+                card.style.boxShadow = '0 12px 25px rgba(0,0,0,0.15)';
+            };
+            card.onmouseleave = () => {
+                card.style.transform = 'translateY(0)';
+                card.style.boxShadow = '0 6px 15px rgba(0,0,0,0.1)';
+            };
+            card.onclick = () => openLightbox(foto.url);
+            card.innerHTML = `
+                <img src="${foto.url}" style="width:100%; height:220px; object-fit:cover;">
+                <div style="padding: 12px;">
+                    <p style="margin:0; color:#4A3520;"><i class="fas fa-camera"></i> ${escapeHtml(foto.caption)}</p>
+                </div>
+            `;
+            galleryGrid.appendChild(card);
+        });
+    }
+    
+    container.appendChild(galleryGrid);
+}
+
+// ============================================
+// RENDER GALLERY MANAGER (ADMIN)
 // ============================================
 function renderGalleryManager() {
     const manager = document.getElementById('galleryManager');
@@ -199,31 +256,95 @@ function renderGalleryManager() {
     
     manager.innerHTML = '';
     
-    if (komunitasData.gallery.length === 0) {
-        manager.innerHTML = '<p style="text-align:center; padding:20px;">Belum ada foto. Klik "Tambah Foto" untuk mengupload.</p>';
+    // Selector
+    const adminSelector = document.createElement('div');
+    adminSelector.style.cssText = `
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 20px;
+        padding: 12px;
+        background: #F7EAD6;
+        border-radius: 50px;
+        justify-content: center;
+    `;
+    
+    const galleryNames = Object.keys(komunitasData.galleries);
+    
+    galleryNames.forEach(name => {
+        const btn = document.createElement('button');
+        btn.textContent = `${name} (${komunitasData.galleries[name].length})`;
+        btn.style.cssText = `
+            padding: 6px 18px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            background: ${selectedGallery === name ? '#B47C42' : 'white'};
+            color: ${selectedGallery === name ? 'white' : '#4A3520'};
+        `;
+        btn.onclick = () => {
+            selectedGallery = name;
+            renderGalleryManager();
+            renderGallery();
+        };
+        adminSelector.appendChild(btn);
+    });
+    
+    manager.appendChild(adminSelector);
+    
+    // Info upload
+    const uploadInfo = document.createElement('div');
+    uploadInfo.style.cssText = `
+        background: #E8F5E9;
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-weight: bold;
+        color: #2E7D32;
+    `;
+    uploadInfo.innerHTML = `<i class="fas fa-upload"></i> Upload foto akan masuk ke: <span style="color:#B47C42;">${selectedGallery}</span>`;
+    manager.appendChild(uploadInfo);
+    
+    const currentPhotos = komunitasData.galleries[selectedGallery] || [];
+    
+    if (currentPhotos.length === 0) {
+        manager.innerHTML += `<p style="text-align:center; padding:30px;">Belum ada foto di galeri "${selectedGallery}"</p>`;
         return;
     }
     
-    komunitasData.gallery.forEach((foto, index) => {
+    currentPhotos.forEach((foto) => {
         const item = document.createElement('div');
-        item.className = 'gallery-manager-item';
-        item.setAttribute('data-foto-index', index);
+        item.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            flex-wrap: wrap;
+            background: #fff;
+            margin-bottom: 8px;
+            border-radius: 12px;
+        `;
         item.innerHTML = `
-            <img src="${foto.url}" alt="${foto.caption}">
-            <input type="text" class="caption-input" data-id="${foto.id}" value="${escapeHtml(foto.caption)}" placeholder="Caption foto">
-            <button class="delete-doc-btn" data-id="${foto.id}" data-index="${index}"><i class="fas fa-trash"></i> Hapus</button>
+            <img src="${foto.url}" style="width:70px; height:70px; object-fit:cover; border-radius:10px;">
+            <input type="text" class="caption-input" data-id="${foto.id}" data-gallery="${selectedGallery}" value="${escapeHtml(foto.caption)}" style="flex:2; padding:10px; border-radius:8px; border:1px solid #ddd;">
+            <button class="delete-photo-btn" data-id="${foto.id}" data-gallery="${selectedGallery}" style="background:#e74c3c; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer;">
+                <i class="fas fa-trash"></i> Hapus
+            </button>
         `;
         manager.appendChild(item);
     });
     
-    // Event untuk edit caption
-    const captionInputs = document.querySelectorAll('.caption-input');
-    captionInputs.forEach(input => {
+    // Event edit caption
+    document.querySelectorAll('.caption-input').forEach(input => {
         input.onchange = function() {
+            const gallery = this.getAttribute('data-gallery');
             const id = parseInt(this.getAttribute('data-id'));
-            const found = komunitasData.gallery.find(f => f.id === id);
-            if (found) {
-                found.caption = this.value;
+            const foto = komunitasData.galleries[gallery]?.find(f => f.id === id);
+            if (foto) {
+                foto.caption = this.value;
                 saveData();
                 renderGallery();
                 showNotification('Caption berhasil diupdate!', 'success');
@@ -231,130 +352,29 @@ function renderGalleryManager() {
         };
     });
     
-    // Event untuk tombol hapus
-    const deleteBtns = document.querySelectorAll('.delete-doc-btn');
-    deleteBtns.forEach(btn => {
-        btn.removeEventListener('click', handleDelete);
-        btn.addEventListener('click', handleDelete);
+    // Event hapus foto
+    document.querySelectorAll('.delete-photo-btn').forEach(btn => {
+        btn.onclick = function() {
+            const gallery = this.getAttribute('data-gallery');
+            const id = parseInt(this.getAttribute('data-id'));
+            
+            if (confirm(`Hapus foto dari galeri "${gallery}"?`)) {
+                const index = komunitasData.galleries[gallery].findIndex(f => f.id === id);
+                if (index !== -1) {
+                    komunitasData.galleries[gallery].splice(index, 1);
+                    saveData();
+                    renderGallery();
+                    renderGalleryManager();
+                    showNotification('Foto berhasil dihapus!', 'success');
+                }
+            }
+        };
     });
 }
 
-// Fungsi handle delete
-function handleDelete(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const btn = e.currentTarget;
-    const id = parseInt(btn.getAttribute('data-id'));
-    const index = parseInt(btn.getAttribute('data-index'));
-    
-    if (confirm(`Apakah Anda yakin ingin menghapus foto ini?`)) {
-        let foundIndex = komunitasData.gallery.findIndex(f => f.id === id);
-        
-        if (foundIndex === -1 && index >= 0 && index < komunitasData.gallery.length) {
-            foundIndex = index;
-        }
-        
-        if (foundIndex !== -1) {
-            komunitasData.gallery.splice(foundIndex, 1);
-            saveData();
-            renderGallery();
-            renderGalleryManager();
-            showNotification('Foto berhasil dihapus!', 'success');
-        } else {
-            showNotification('Gagal menghapus foto!', 'error');
-        }
-    }
-}
-
 // ============================================
-// FUNGSI CEK UKURAN STORAGE (opsional)
+// FUNGSI LAINNYA
 // ============================================
-function checkStorageSize() {
-    let totalSize = 0;
-    for (let foto of komunitasData.gallery) {
-        if (foto.url && foto.url.startsWith('data:image')) {
-            // Perkiraan ukuran base64 (hampir sama dengan ukuran asli)
-            const sizeInBytes = Math.ceil(foto.url.length * 0.75);
-            totalSize += sizeInBytes;
-        }
-    }
-    
-    const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
-    console.log(`Total penyimpanan foto: ${totalSizeMB} MB`);
-    
-    // Peringatan jika melebihi 50MB (karena localStorage terbatas)
-    if (totalSize > 50 * 1024 * 1024) {
-        showNotification(`Peringatan: Total foto ${totalSizeMB} MB. LocalStorage mungkin penuh!`, 'error');
-    } else {
-        showNotification(`Total foto: ${komunitasData.gallery.length} (${totalSizeMB} MB)`, 'success');
-    }
-    
-    return totalSize;
-}
-
-// ============================================
-// FUNGSI HAPUS COVER
-// ============================================
-function deleteCoverPhoto() {
-    if (confirm('Hapus foto cover? Foto akan kembali ke default.')) {
-        komunitasData.coverPhoto = "https://placehold.co/600x300/FCE9C4/B47C42?text=Ilustrasi+PAUD+Mentawai";
-        saveData();
-        renderCoverPhoto();
-        showNotification('Foto cover berhasil dihapus!', 'success');
-    }
-}
-
-// ============================================
-// FUNGSI HAPUS SEMUA FOTO
-// ============================================
-function deleteAllPhotos() {
-    if (confirm('⚠️ HAPUS SEMUA FOTO? Tindakan ini tidak bisa dibatalkan!')) {
-        komunitasData.gallery = [];
-        saveData();
-        renderGallery();
-        renderGalleryManager();
-        showNotification('Semua foto berhasil dihapus!', 'success');
-    }
-}
-
-// ============================================
-// FUNGSI RESET DATA
-// ============================================
-function resetAllData() {
-    if (confirm('⚠️ RESET TOTAL! Semua data akan kembali ke default. Lanjutkan?')) {
-        localStorage.removeItem('komunitasPAUD');
-        location.reload();
-    }
-}
-
-// ============================================
-// FUNGSI RENDER LAINNYA
-// ============================================
-function renderGallery() {
-    const grid = document.getElementById('galleryGrid');
-    if (!grid) return;
-    
-    grid.innerHTML = '';
-    
-    if (komunitasData.gallery.length === 0) {
-        grid.innerHTML = '<p style="text-align:center; padding:40px;">Belum ada foto dokumentasi. Silakan tambah melalui Admin Panel.</p>';
-        return;
-    }
-    
-    komunitasData.gallery.forEach((foto, idx) => {
-        const card = document.createElement('div');
-        card.className = 'foto-card';
-        card.style.setProperty('--index', idx);
-        card.innerHTML = `
-            <img src="${foto.url}" alt="${foto.caption}" loading="lazy" onerror="this.src='https://placehold.co/400x400/E7C994/9C6A3A?text=Error'">
-            <p><i class="fas fa-camera"></i> ${escapeHtml(foto.caption)}</p>
-        `;
-        card.onclick = () => openLightbox(foto.url);
-        grid.appendChild(card);
-    });
-}
-
 function renderCoverPhoto() {
     const coverImg = document.getElementById('coverProfileImg');
     if (coverImg) coverImg.src = komunitasData.coverPhoto;
@@ -410,6 +430,43 @@ function renderAll() {
     renderVisiMisi();
     renderGallery();
     renderGalleryManager();
+}
+
+function uploadCoverPhoto(file) {
+    if (!file) {
+        showNotification('Pilih file terlebih dahulu!', 'error');
+        return;
+    }
+    
+    if (!file.type.startsWith('image/')) {
+        showNotification('Harap pilih file gambar!', 'error');
+        return;
+    }
+    
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+        showNotification(`Ukuran file terlalu besar! Maksimal ${MAX_FILE_SIZE_MB} MB!`, 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        komunitasData.coverPhoto = e.target.result;
+        saveData();
+        renderCoverPhoto();
+        showNotification('Foto cover berhasil diupdate!', 'success');
+        const coverUpload = document.getElementById('coverUpload');
+        if (coverUpload) coverUpload.value = '';
+    };
+    reader.readAsDataURL(file);
+}
+
+function deleteCoverPhoto() {
+    if (confirm('Hapus foto cover? Foto akan kembali ke default.')) {
+        komunitasData.coverPhoto = "https://placehold.co/600x300/FCE9C4/B47C42?text=Ilustrasi+PAUD+Mentawai";
+        saveData();
+        renderCoverPhoto();
+        showNotification('Foto cover berhasil dihapus!', 'success');
+    }
 }
 
 function saveDeskripsi() {
@@ -503,16 +560,37 @@ function showNotification(message, type) {
 }
 
 function openLightbox(src) {
-    const lightbox = document.getElementById('lightbox');
+    let lightbox = document.getElementById('lightbox');
+    if (!lightbox) {
+        lightbox = document.createElement('div');
+        lightbox.id = 'lightbox';
+        lightbox.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        `;
+        lightbox.innerHTML = '<img id="lightboxImg" style="max-width:90%; max-height:90%;">';
+        lightbox.onclick = closeLightbox;
+        document.body.appendChild(lightbox);
+    }
     const lightboxImg = document.getElementById('lightboxImg');
     if (lightboxImg) lightboxImg.src = src;
-    if (lightbox) lightbox.classList.add('active');
+    lightbox.classList.add('active');
+    lightbox.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
 
 function closeLightbox() {
     const lightbox = document.getElementById('lightbox');
-    if (lightbox) lightbox.classList.remove('active');
+    if (lightbox) lightbox.style.display = 'none';
     document.body.style.overflow = '';
 }
 
@@ -537,18 +615,16 @@ function showPage(pageId) {
 }
 
 // ============================================
-// EVENT LISTENERS
+// INITIALIZATION
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
     loadData();
     renderAll();
     
-    const navBtns = document.querySelectorAll('.nav-btn');
-    for (let btn of navBtns) {
-        btn.onclick = function() {
-            showPage(this.getAttribute('data-page'));
-        };
-    }
+    // Navigasi
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.onclick = () => showPage(btn.getAttribute('data-page'));
+    });
     
     const toDesk = document.getElementById('toDeskBtn');
     if (toDesk) toDesk.onclick = () => showPage('deskripsi');
@@ -556,6 +632,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const toGal = document.getElementById('toGalBtn');
     if (toGal) toGal.onclick = () => showPage('dokumentasi');
     
+    // Admin Panel
     const toggle = document.getElementById('adminToggleBtn');
     const panel = document.getElementById('adminPanel');
     const close = document.getElementById('closeAdminBtn');
@@ -563,130 +640,58 @@ document.addEventListener('DOMContentLoaded', function() {
     if (toggle) toggle.onclick = () => panel.classList.toggle('open');
     if (close) close.onclick = () => panel.classList.remove('open');
     
-    const tabs = document.querySelectorAll('.admin-tab');
-    for (let tab of tabs) {
+    // Tabs
+    document.querySelectorAll('.admin-tab').forEach(tab => {
         tab.onclick = function() {
-            for (let t of tabs) t.classList.remove('active');
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
             this.classList.add('active');
-            const contents = document.querySelectorAll('.admin-tab-content');
-            for (let c of contents) c.classList.remove('active');
+            document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
             const target = document.getElementById(`tab-${this.getAttribute('data-tab')}`);
             if (target) target.classList.add('active');
-            
-            if (this.getAttribute('data-tab') === 'dokumentasi') {
-                renderGalleryManager();
-            }
+            if (this.getAttribute('data-tab') === 'dokumentasi') renderGalleryManager();
         };
-    }
+    });
     
+    // Cover buttons
     const saveCover = document.getElementById('saveCoverBtn');
-    if (saveCover) {
-        saveCover.onclick = function() {
-            const file = document.getElementById('coverUpload').files[0];
-            if (file) uploadCoverPhoto(file);
-            else showNotification('Pilih file foto dulu!', 'error');
-        };
-    }
+    if (saveCover) saveCover.onclick = () => {
+        const file = document.getElementById('coverUpload')?.files[0];
+        file ? uploadCoverPhoto(file) : showNotification('Pilih file foto dulu!', 'error');
+    };
     
     const deleteCover = document.getElementById('deleteCoverBtn');
     if (deleteCover) deleteCover.onclick = deleteCoverPhoto;
     
+    // Upload dokumentasi button
     const addPhotos = document.getElementById('addPhotosBtn');
     if (addPhotos) {
-        addPhotos.onclick = function() {
-            const files = document.getElementById('docUpload').files;
-            if (files.length > 0) uploadDokumentasi(files);
-            else showNotification('Pilih foto yang akan diupload!', 'error');
+        addPhotos.onclick = () => {
+            const files = document.getElementById('docUpload')?.files;
+            if (files && files.length > 0) {
+                if (confirm(`Upload ${files.length} foto ke galeri "${selectedGallery}"?`)) {
+                    uploadDokumentasi(files);
+                }
+            } else {
+                showNotification('Pilih foto yang akan diupload!', 'error');
+            }
         };
     }
     
+    // Save buttons
     const saveDesc = document.getElementById('saveDeskripsiBtn');
     if (saveDesc) saveDesc.onclick = saveDeskripsi;
     
     const saveVM = document.getElementById('saveVisimisiBtn');
     if (saveVM) saveVM.onclick = saveVisiMisi;
     
-    const lb = document.getElementById('lightbox');
-    if (lb) lb.onclick = closeLightbox;
-    document.onkeydown = function(e) {
-        if (e.key === 'Escape') closeLightbox();
-    };
+    // Keyboard escape
+    document.onkeydown = (e) => { if (e.key === 'Escape') closeLightbox(); };
     
-    window.onscroll = function() {
+    // Navbar scroll
+    window.onscroll = () => {
         const nav = document.querySelector('nav');
-        if (nav) {
-            if (window.scrollY > 50) nav.classList.add('scrolled');
-            else nav.classList.remove('scrolled');
-        }
+        if (nav) nav.classList.toggle('scrolled', window.scrollY > 50);
     };
     
-    addDecorations();
-    
-    console.log(`✅ Website siap! Maksimal upload: ${MAX_FILE_SIZE_MB} MB per file`);
+    console.log("✅ Website siap! Upload foto akan langsung muncul di dokumentasi");
 });
-
-function addDecorations() {
-    if (document.querySelector('.decor-leaf')) return;
-    
-    const decorLeft = document.createElement('div');
-    decorLeft.className = 'decor-leaf';
-    decorLeft.innerHTML = '🌿🍃🌱';
-    document.body.appendChild(decorLeft);
-    
-    const decorRight = document.createElement('div');
-    decorRight.className = 'decor-leaf-right';
-    decorRight.innerHTML = '🌺🌸🌼';
-    document.body.appendChild(decorRight);
-}
-
-// ============================================
-// MENGGUNAKAN JSONBin.io (SHARED DATABASE)
-// ============================================
-
-// Daftar di https://jsonbin.io dan dapatkan:
-const JSONBIN_BIN_ID = "6a281314da38895dfea05887";
-const JSONBIN_API_KEY = "$2a$10$lPmsWr7pdmxPAzaazGHcl.XxaZ6AZdVkgtr/WLJqsQv1lEQ/q4q8C";
-
-// Load data dari JSONBin
-async function loadDataFromServer() {
-    try {
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-            headers: {
-                'X-Master-Key': JSONBIN_API_KEY
-            }
-        });
-        const result = await response.json();
-        
-        if (result.record && Object.keys(result.record).length > 0) {
-            komunitasData = result.record;
-        } else {
-            setDefaultData();
-        }
-        renderAll();
-    } catch (error) {
-        console.error('Gagal load:', error);
-        setDefaultData();
-        renderAll();
-    }
-}
-
-// Simpan data ke JSONBin
-async function saveDataToServer() {
-    try {
-        await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': JSONBIN_API_KEY
-            },
-            body: JSON.stringify(komunitasData)
-        });
-        showNotification('Data tersimpan! Semua pengguna melihat perubahan.', 'success');
-    } catch (error) {
-        showNotification('Gagal menyimpan!', 'error');
-    }
-}
-
-function saveData() {
-    saveDataToServer();
-}
