@@ -638,3 +638,55 @@ function addDecorations() {
     decorRight.innerHTML = '🌺🌸🌼';
     document.body.appendChild(decorRight);
 }
+
+// ============================================
+// MENGGUNAKAN JSONBin.io (SHARED DATABASE)
+// ============================================
+
+// Daftar di https://jsonbin.io dan dapatkan:
+const JSONBIN_BIN_ID = "6a281314da38895dfea05887";
+const JSONBIN_API_KEY = "$2a$10$lPmsWr7pdmxPAzaazGHcl.XxaZ6AZdVkgtr/WLJqsQv1lEQ/q4q8C";
+
+// Load data dari JSONBin
+async function loadDataFromServer() {
+    try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+            headers: {
+                'X-Master-Key': JSONBIN_API_KEY
+            }
+        });
+        const result = await response.json();
+        
+        if (result.record && Object.keys(result.record).length > 0) {
+            komunitasData = result.record;
+        } else {
+            setDefaultData();
+        }
+        renderAll();
+    } catch (error) {
+        console.error('Gagal load:', error);
+        setDefaultData();
+        renderAll();
+    }
+}
+
+// Simpan data ke JSONBin
+async function saveDataToServer() {
+    try {
+        await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': JSONBIN_API_KEY
+            },
+            body: JSON.stringify(komunitasData)
+        });
+        showNotification('Data tersimpan! Semua pengguna melihat perubahan.', 'success');
+    } catch (error) {
+        showNotification('Gagal menyimpan!', 'error');
+    }
+}
+
+function saveData() {
+    saveDataToServer();
+}
