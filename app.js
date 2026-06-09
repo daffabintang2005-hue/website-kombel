@@ -1,16 +1,12 @@
 // ============================================
 // KOMBEL PAUD KARAMEN SIMAERUK
-// VERSI FINAL - DENGAN LOGIN ADMIN
-// DATABASE: GOOGLE SHEETS
+// VERSI LOCAL STORAGE (TANPA DATABASE)
+// DENGAN LOGIN ADMIN
 // ============================================
 
 // ============================================
-// KONFIGURASI
+// KONFIGURASI LOGIN ADMIN
 // ============================================
-// GANTI DENGAN URL GOOGLE APPS SCRIPT ANDA!
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztQJvYOdt65cEtK4MaXZkGWvuDGD5qKfxMbId2qdkd34HkLSvgYyVo5g2ybm6q6gyUdw/exec";
-
-// KONFIGURASI LOGIN ADMIN (UBAH SESUAI KEINGINAN)
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "paud123";
 
@@ -20,12 +16,18 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const COMPRESSION_QUALITY = 0.6;
 const MAX_IMAGE_WIDTH = 800;
 
-// Data default
+// ============================================
+// DATA DEFAULT - KONTEN LENGKAP DARI PDF
+// ============================================
 let komunitasData = {
     coverPhoto: "https://placehold.co/600x300/FCE9C4/B47C42?text=Ilustrasi+PAUD+Mentawai",
-    deskripsi: `<p><strong>Gugus PAUD Karamen Simaeruk</strong> adalah wadah koordinasi dan kerja sama antar satuan PAUD (TK, KB, TPA, SPS) di Kecamatan Karamen, Kepulauan Mentawai. Terinspirasi dari filosofi "Simaeruk" (bersatu dalam perbedaan), komunitas ini menjadi "rumah belajar" bagi para pendidik PAUD serta kepala sekolah untuk saling berbagi praktik baik, mengembangkan program bersama, dan meningkatkan mutu layanan anak usia dini.</p><br><p>Sebagai bagian dari penguatan <strong>Pusat Kegiatan Gugus (PKG) PAUD</strong>, kami mewadahi pembinaan profesionalitas guru secara terencana, koordinasi antarlembaga, serta pengembangan kurikulum yang kontekstual dengan budaya Mentawai.</p><br><div style="background: #EFE2CC; border-radius: 28px; padding: 20px;"><i class="fas fa-star-of-life"></i> <strong>Fungsi Utama Komunitas:</strong><ul style="margin-top: 12px; list-style-type: none;"><li>✓ Wadah Pembinaan & peningkatan kompetensi pendidik PAUD</li><li>✓ Pusat Koordinasi berbagi informasi & sumber daya antar lembaga</li><li>✓ Pengembangan Kurikulum bermuatan budaya Mentawai & standar mutu</li><li>✓ Kolaborasi bersama Dinas Pendidikan dan mitra orang tua</li></ul></div>`,
-    visi: `<p style="font-size:1.2rem; font-weight:600; background:#F7EAD6; border-radius: 30px; padding: 16px;"><i class="fas fa-quote-left"></i> "Terwujudnya Gugus PAUD yang unggul, berkarakter, dan berdaya saing untuk membentuk generasi emas Indonesia yang cerdas, kreatif, dan berakhlak mulia"</p><p>Inti visi: <strong>Anak PAUD menjadi generasi emas yang pintar dan berkarakter Pancasila</strong> dengan semangat budaya Mentawai.</p>`,
-    misi: `<div class="grid-misi"><div class="misi-item"><i class="fas fa-chalkboard-user"></i> <strong>Pengembangan Kompetensi Pendidik</strong><br>Meningkatkan profesionalisme guru melalui Kelompok Kerja Guru (KKG) dan pelatihan manajerial.</div><div class="misi-item"><i class="fas fa-book-open"></i> <strong>Peningkatan Kualitas Pembelajaran</strong><br>Memfasilitasi kurikulum inovatif, metode kreatif, dan alat penilaian sesuai tumbuh kembang anak.</div><div class="misi-item"><i class="fas fa-building"></i> <strong>Pengelolaan Kelembagaan</strong><br>Koordinasi administrasi PAUD yang tertib, akuntabel, dan berstandar nasional.</div><div class="misi-item"><i class="fas fa-handshake"></i> <strong>Kemitraan & Komunikasi</strong><br>Kolaborasi antara sekolah, orang tua, masyarakat, dan pemerintah.</div><div class="misi-item"><i class="fas fa-heart"></i> <strong>Pembentukan Karakter Anak</strong><br>Penanaman nilai jujur, disiplin, gotong royong, toleransi, serta kearifan lokal Mentawai.</div><div class="misi-item"><i class="fas fa-leaf"></i> <strong>PAUD Holistik Integratif</strong><br>Perhatian pada gizi, kesehatan, pengasuhan, dan perlindungan anak di lingkungan sekolah.</div></div>`,
+    
+    deskripsi: `<p><strong>Gugus PAUD</strong> adalah wadah koordinasi dan kerja sama antar TK, KB, TPA, SPS di satu Kecamatan. Tujuannya agar guru-guru PAUD bisa saling belajar, berbagi ilmu, dan mengembangkan program-program bersama, seperti "komunitas belajar" bagi guru PAUD bersama kepala sekolahnya, tidak berdiri sendiri-sendiri lagi.</p><br><div style="background: #EFE2CC; border-radius: 28px; padding: 20px;"><i class="fas fa-star-of-life"></i> <strong>Fungsi Utama Gugus PAUD:</strong><ul style="margin-top: 12px; list-style-type: none;"><li>✓ <strong>Wadah Pembinaan:</strong> Tempat untuk meningkatkan kompetensi dan profesionalisme pendidik serta tenaga kependidikan secara terencana.</li><li>✓ <strong>Pusat Koordinasi:</strong> Tempat berbagi informasi, pengalaman, dan sumber daya antar lembaga.</li><li>✓ <strong>Pengembangan Kurikulum:</strong> Membantu menyamakan standar dan mutu layanan pendidikan anak usia dini.</li></ul></div><p>Organisasi ini biasanya dibina oleh dinas pendidikan setempat dan sering kali dinaungi oleh wadah yang lebih besar bernama <strong>Pusat Kegiatan Gugus (PKG) PAUD</strong>.</p>`,
+    
+    visi: `<div style="background: #F7EAD6; border-radius: 30px; padding: 20px; margin-bottom: 20px;"><p style="font-size:1.2rem; font-weight:600; text-align:center;"><i class="fas fa-quote-left"></i> Visi Utama Gugus PAUD</p><p style="font-style:italic; text-align:center;">"Terwujudnya Gugus PAUD yang unggul, berkarakter, dan berdaya saing untuk membentuk generasi emas Indonesia yang cerdas, kreatif, dan berakhlak mulia"</p><p style="text-align:center;"><strong>Inti Visi:</strong> Anak PAUD menjadi generasi emas yang pintar dan berkarakter Pancasila.</p></div><div class="grid-visi"><div class="visi-item"><i class="fas fa-briefcase"></i> <strong>Profesionalitas Kerja</strong><br>Membangun tata kelola organisasi dan pendidik yang kompeten serta taat asas.</div><div class="visi-item"><i class="fas fa-lightbulb"></i> <strong>Pusat Inovasi</strong><br>Menjadi penggerak metode pembelajaran yang kreatif, adaptif, dan menyenangkan bagi anak.</div><div class="visi-item"><i class="fas fa-globe"></i> <strong>Keunggulan Berbudaya</strong><br>Membentuk karakter pendidik yang cerdas, mandiri, dan berakhlak mulia.</div><div class="visi-item"><i class="fas fa-star"></i> <strong>Layanan Berkualitas</strong><br>Menjamin standar mutu stimulasi perkembangan anak di semua lembaga anggota.</div></div>`,
+    
+    misi: `<div class="grid-misi"><div class="misi-item"><i class="fas fa-chalkboard-user"></i> <strong>Pengembangan Kompetensi Pendidik</strong><br>Meningkatkan profesionalisme, kreativitas, dan kemampuan manajerial guru serta tenaga kependidikan melalui wadah seperti Kelompok Kerja Guru (KKG) dan Gugus PAUD.</div><div class="misi-item"><i class="fas fa-book-open"></i> <strong>Peningkatan Kualitas Pembelajaran</strong><br>Memfasilitasi pengembangan dan penerapan kurikulum, metode pembelajaran, dan alat penilaian yang inovatif serta sesuai dengan tumbuh kembang anak.</div><div class="misi-item"><i class="fas fa-building"></i> <strong>Pengelolaan Kelembagaan</strong><br>Mengoordinasikan pengelolaan lembaga PAUD (TK, KB, TPA, SPS) agar lebih tertib administrasi, akuntabel, dan berstandar nasional.</div><div class="misi-item"><i class="fas fa-handshake"></i> <strong>Kemitraan dan Komunikasi</strong><br>Membangun komunikasi yang efektif dan kolaborasi antara sekolah, orang tua murid, masyarakat, dan pemerintah setempat.</div><div class="misi-item"><i class="fas fa-heart"></i> <strong>Pembentukan Karakter Anak</strong><br>Menyelenggarakan program yang berorientasi pada pembentukan karakter anak sejak dini, termasuk penanaman budi pekerti yang berbudaya lokal.</div></div><br><div style="background: #EFE2CC; border-radius: 20px; padding: 20px; margin-top: 20px;"><i class="fas fa-tasks"></i> <strong>Capaian Misi Gugus PAUD:</strong><ul style="margin-top: 12px; list-style-type: none;"><li>✓ Meningkatkan mutu pembelajaran PAUD melalui pelatihan guru, KKG Gugus, berbagi media pembelajaran kreatif.</li><li>✓ Mengembangkan karakter anak sesuai nilai Pancasila: menanamkan nilai kejujuran, disiplin, gotong royong, toleransi sejak dini.</li><li>✓ Meningkatkan kerja sama antar lembaga PAUD: membuat lomba bersama, parenting bareng, penilaian bersama supaya adil.</li><li>✓ Meningkatkan peran serta orang tua dan masyarakat: edukasi pola asuh, melibatkan komite/orang tua di program sekolah.</li><li>✓ Mewujudkan PAUD Holistik-Integratif: tidak cuma belajar, tetapi juga memperhatikan gizi, kesehatan, pengasuhan, dan perlindungan anak di lingkungan sekolah.</li></ul></div>`,
+    
     galleries: {
         "Kegiatan Belajar": [],
         "Ekstrakurikuler": [],
@@ -38,129 +40,42 @@ let komunitasData = {
 
 let selectedGallery = "Kegiatan Belajar";
 let isAdmin = false;
-let autoRefreshInterval = null;
 
 // ============================================
-// DATABASE FUNCTIONS (GOOGLE SHEETS)
+// LOAD & SAVE DATA (LOCAL STORAGE)
 // ============================================
-
-async function loadDataFromServer() {
-    showLoading(true, 'Mengambil data...');
-    
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData`, {
-            signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (response.ok) {
-            const result = await response.json();
-            
-            if (result.success && result.data) {
-                komunitasData = result.data;
-                
-                localStorage.setItem('komunitasPAUD_cache', JSON.stringify(komunitasData));
-                localStorage.setItem('komunitasPAUD_cache_time', Date.now().toString());
-                
-                const defaultGalleries = ["Kegiatan Belajar", "Ekstrakurikuler", "Acara Penting", "Prestasi", "Lainnya"];
-                defaultGalleries.forEach(gallery => {
-                    if (!komunitasData.galleries[gallery]) {
-                        komunitasData.galleries[gallery] = [];
-                    }
-                });
-                
-                renderAll();
-                showNotification('Data berhasil dimuat!', 'success');
-            } else {
-                throw new Error("Data kosong");
-            }
-        } else {
-            throw new Error("Gagal fetch");
-        }
-        
-    } catch(error) {
-        console.log("Error load data:", error);
-        
-        const cachedData = localStorage.getItem('komunitasPAUD_cache');
-        if (cachedData) {
-            try {
-                komunitasData = JSON.parse(cachedData);
-                renderAll();
-                showNotification('Menggunakan data tersimpan (offline)', 'info');
-            } catch(e) {}
-        } else {
-            renderAll();
-        }
-    }
-    
-    showLoading(false);
-}
-
-async function saveDataToServer() {
-    if (!isAdmin) return false;
-    
-    komunitasData.lastUpdated = new Date().toISOString();
-    showLoading(true, 'Menyimpan ke server...');
-    
-    try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'saveData', data: komunitasData })
-        });
-        
-        localStorage.setItem('komunitasPAUD_cache', JSON.stringify(komunitasData));
-        localStorage.setItem('komunitasPAUD_cache_time', Date.now().toString());
-        
-        showNotification('✅ Data tersimpan di server!', 'success');
-        return true;
-    } catch(error) {
-        console.error("Error save data:", error);
-        showNotification('Gagal menyimpan! Periksa koneksi.', 'error');
-        return false;
-    } finally {
-        showLoading(false);
-    }
-}
-
-async function saveData() {
-    if (isAdmin) {
-        await saveDataToServer();
-    } else {
-        localStorage.setItem('komunitasPAUD_cache', JSON.stringify(komunitasData));
-    }
-}
-
-function startAutoRefresh() {
-    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-    
-    autoRefreshInterval = setInterval(async () => {
-        if (isAdmin) return;
-        
+function loadData() {
+    const savedData = localStorage.getItem('komunitasPAUD');
+    if (savedData) {
         try {
-            const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData`);
-            const result = await response.json();
-            
-            if (result.success && result.data && result.data.lastUpdated !== komunitasData.lastUpdated) {
-                komunitasData = result.data;
-                renderAll();
-                showNotification('📢 Konten telah diperbarui oleh Admin!', 'info');
+            const parsed = JSON.parse(savedData);
+            if (parsed && parsed.galleries) {
+                komunitasData = parsed;
             }
         } catch(e) {
-            console.log("Auto refresh error:", e);
+            console.error('Error loading data:', e);
         }
-    }, 10000);
+    }
+    
+    // Pastikan semua kategori galeri ada
+    const defaultGalleries = ["Kegiatan Belajar", "Ekstrakurikuler", "Acara Penting", "Prestasi", "Lainnya"];
+    defaultGalleries.forEach(gallery => {
+        if (!komunitasData.galleries[gallery]) {
+            komunitasData.galleries[gallery] = [];
+        }
+    });
+    
+    renderAll();
+}
+
+function saveData() {
+    localStorage.setItem('komunitasPAUD', JSON.stringify(komunitasData));
+    console.log("Data tersimpan ke LocalStorage");
 }
 
 // ============================================
 // LOGIN ADMIN
 // ============================================
-
 function showLoginModal() {
     const oldModal = document.getElementById('adminLoginModal');
     if (oldModal) oldModal.remove();
@@ -216,7 +131,6 @@ function showLoginModal() {
         if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
             isAdmin = true;
             sessionStorage.setItem('adminLoggedIn', 'true');
-            localStorage.setItem('adminLoggedIn', 'true');
             modal.remove();
             showAdminUI(true);
             renderAll();
@@ -242,17 +156,15 @@ function showLoginModal() {
 function logoutAdmin() {
     if (confirm('Yakin ingin logout dari mode admin?')) {
         sessionStorage.removeItem('adminLoggedIn');
-        localStorage.removeItem('adminLoggedIn');
         isAdmin = false;
         showAdminUI(false);
         renderAll();
-        startAutoRefresh();
         showNotification('Anda telah logout dari mode admin.', 'info');
     }
 }
 
 function checkAdminStatus() {
-    const savedAdmin = sessionStorage.getItem('adminLoggedIn') || localStorage.getItem('adminLoggedIn');
+    const savedAdmin = sessionStorage.getItem('adminLoggedIn');
     
     if (savedAdmin === 'true') {
         isAdmin = true;
@@ -261,7 +173,6 @@ function checkAdminStatus() {
     } else {
         isAdmin = false;
         showAdminUI(false);
-        startAutoRefresh();
     }
 }
 
@@ -310,7 +221,6 @@ function updateAdminIndicator(isAdminMode) {
 // ============================================
 // KOMPRESI GAMBAR
 // ============================================
-
 function compressImage(file, callback) {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -340,7 +250,6 @@ function compressImage(file, callback) {
 // ============================================
 // UPLOAD FUNCTIONS
 // ============================================
-
 async function uploadDokumentasi(files) {
     if (!isAdmin) {
         showNotification('Login sebagai admin untuk upload foto!', 'warning');
@@ -373,7 +282,7 @@ async function uploadDokumentasi(files) {
             continue;
         }
         
-        compressImage(file, async function(compressedUrl) {
+        compressImage(file, function(compressedUrl) {
             const newId = Date.now() + Math.floor(Math.random() * 100000) + processed;
             const caption = prompt(`Caption untuk foto:`, `Kegiatan ${selectedGallery}`);
             
@@ -391,9 +300,10 @@ async function uploadDokumentasi(files) {
             processed++;
             successCount++;
             
-            await saveData();
+            saveData();
             renderGallery();
             renderGalleryManager();
+            
             checkComplete(processed, total, successCount);
         });
     }
@@ -407,7 +317,7 @@ function checkComplete(processed, total, successCount) {
     }
 }
 
-async function uploadCoverPhoto(file) {
+function uploadCoverPhoto(file) {
     if (!isAdmin) {
         showNotification('Login sebagai admin untuk mengganti cover!', 'warning');
         return;
@@ -428,9 +338,9 @@ async function uploadCoverPhoto(file) {
         return;
     }
     
-    compressImage(file, async function(compressedUrl) {
+    compressImage(file, function(compressedUrl) {
         komunitasData.coverPhoto = compressedUrl;
-        await saveData();
+        saveData();
         renderCoverPhoto();
         showNotification('Foto cover berhasil diupdate!', 'success');
         const coverUpload = document.getElementById('coverUpload');
@@ -438,7 +348,7 @@ async function uploadCoverPhoto(file) {
     });
 }
 
-async function deleteCoverPhoto() {
+function deleteCoverPhoto() {
     if (!isAdmin) {
         showNotification('Login sebagai admin untuk menghapus cover!', 'warning');
         return;
@@ -446,13 +356,13 @@ async function deleteCoverPhoto() {
     
     if (confirm('Hapus foto cover? Foto akan kembali ke default.')) {
         komunitasData.coverPhoto = "https://placehold.co/600x300/FCE9C4/B47C42?text=Ilustrasi+PAUD+Mentawai";
-        await saveData();
+        saveData();
         renderCoverPhoto();
         showNotification('Foto cover berhasil dihapus!', 'success');
     }
 }
 
-async function clearAllPhotos() {
+function clearAllPhotos() {
     if (!isAdmin) {
         showNotification('Login sebagai admin untuk menghapus semua foto!', 'warning');
         return;
@@ -466,7 +376,7 @@ async function clearAllPhotos() {
             "Prestasi": [],
             "Lainnya": []
         };
-        await saveData();
+        saveData();
         renderGallery();
         renderGalleryManager();
         showNotification('Semua foto telah dihapus!', 'success');
@@ -476,13 +386,13 @@ async function clearAllPhotos() {
 // ============================================
 // RENDER FUNCTIONS
 // ============================================
-
 function renderGallery() {
     let container = document.getElementById('galleryContainer');
     if (!container) return;
     
     container.innerHTML = '';
     
+    // Selector Galeri
     const selectorDiv = document.createElement('div');
     selectorDiv.className = 'gallery-selector';
     
@@ -503,6 +413,7 @@ function renderGallery() {
     
     container.appendChild(selectorDiv);
     
+    // Grid Foto
     const galleryGrid = document.createElement('div');
     galleryGrid.className = 'gallery-grid';
     
@@ -555,6 +466,7 @@ function renderGalleryManager() {
     
     manager.innerHTML = '';
     
+    // Selector galeri untuk admin
     const adminSelector = document.createElement('div');
     adminSelector.style.cssText = `display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;`;
     
@@ -574,12 +486,14 @@ function renderGalleryManager() {
     
     manager.appendChild(adminSelector);
     
+    // Tombol hapus semua
     const clearAllBtn = document.createElement('button');
     clearAllBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Hapus Semua Foto';
     clearAllBtn.style.cssText = `background:#e74c3c; color:white; border:none; padding:10px 20px; border-radius:30px; cursor:pointer; margin-bottom:20px; width:100%; font-weight:bold;`;
     clearAllBtn.onclick = clearAllPhotos;
     manager.appendChild(clearAllBtn);
     
+    // Info upload
     const uploadInfo = document.createElement('div');
     uploadInfo.style.cssText = `background:#E8F5E9; padding:12px; border-radius:12px; margin-bottom:20px; text-align:center; font-size:14px;`;
     uploadInfo.innerHTML = `<i class="fas fa-cloud-upload-alt"></i> <strong>Upload ke: ${selectedGallery}</strong><br><small>Foto akan dikompres otomatis (max 800px)</small>`;
@@ -603,22 +517,24 @@ function renderGalleryManager() {
         manager.appendChild(item);
     });
     
+    // Event edit caption
     document.querySelectorAll('.caption-input').forEach(input => {
-        input.onchange = async function() {
+        input.onchange = function() {
             const gallery = this.getAttribute('data-gallery');
             const id = parseInt(this.getAttribute('data-id'));
             const foto = komunitasData.galleries[gallery]?.find(f => f.id === id);
             if (foto) {
                 foto.caption = this.value;
-                await saveData();
+                saveData();
                 renderGallery();
                 showNotification('Caption berhasil diupdate!', 'success');
             }
         };
     });
     
+    // Event hapus foto
     document.querySelectorAll('.delete-photo-btn').forEach(btn => {
-        btn.onclick = async function() {
+        btn.onclick = function() {
             const gallery = this.getAttribute('data-gallery');
             const id = parseInt(this.getAttribute('data-id'));
             
@@ -626,7 +542,7 @@ function renderGalleryManager() {
                 const index = komunitasData.galleries[gallery].findIndex(f => f.id === id);
                 if (index !== -1) {
                     komunitasData.galleries[gallery].splice(index, 1);
-                    await saveData();
+                    saveData();
                     renderGallery();
                     renderGalleryManager();
                     showNotification('Foto berhasil dihapus!', 'success');
@@ -694,10 +610,9 @@ function renderAll() {
 }
 
 // ============================================
-// EDIT FUNCTIONS
+// EDIT FUNCTIONS (ADMIN ONLY)
 // ============================================
-
-async function saveDeskripsi() {
+function saveDeskripsi() {
     if (!isAdmin) {
         showNotification('Login sebagai admin untuk mengedit deskripsi!', 'warning');
         return;
@@ -708,6 +623,7 @@ async function saveDeskripsi() {
         showNotification('Deskripsi tidak boleh kosong!', 'error');
         return;
     }
+    
     const paragraphs = text.split('\n\n');
     let html = '';
     for (let para of paragraphs) {
@@ -715,13 +631,14 @@ async function saveDeskripsi() {
             html += `<p>${escapeHtml(para).replace(/\n/g, '<br>')}</p>`;
         }
     }
+    
     komunitasData.deskripsi = html;
-    await saveData();
+    saveData();
     renderDeskripsi();
     showNotification('Deskripsi berhasil disimpan!', 'success');
 }
 
-async function saveVisiMisi() {
+function saveVisiMisi() {
     if (!isAdmin) {
         showNotification('Login sebagai admin untuk mengedit visi & misi!', 'warning');
         return;
@@ -735,7 +652,7 @@ async function saveVisiMisi() {
         return;
     }
     
-    komunitasData.visi = `<p style="font-size:1.2rem; font-weight:600; background:#F7EAD6; border-radius: 30px; padding: 16px;"><i class="fas fa-quote-left"></i> "${escapeHtml(visiText)}"</p><p>Inti visi: <strong>Anak PAUD menjadi generasi emas yang pintar dan berkarakter Pancasila</strong> dengan semangat budaya Mentawai.</p>`;
+    komunitasData.visi = `<div style="background: #F7EAD6; border-radius: 30px; padding: 20px; margin-bottom: 20px;"><p style="font-size:1.2rem; font-weight:600; text-align:center;"><i class="fas fa-quote-left"></i> Visi Utama Gugus PAUD</p><p style="font-style:italic; text-align:center;">"${escapeHtml(visiText)}"</p><p style="text-align:center;"><strong>Inti Visi:</strong> Anak PAUD menjadi generasi emas yang pintar dan berkarakter Pancasila.</p></div><div class="grid-visi"><div class="visi-item"><i class="fas fa-briefcase"></i> <strong>Profesionalitas Kerja</strong><br>Membangun tata kelola organisasi dan pendidik yang kompeten serta taat asas.</div><div class="visi-item"><i class="fas fa-lightbulb"></i> <strong>Pusat Inovasi</strong><br>Menjadi penggerak metode pembelajaran yang kreatif, adaptif, dan menyenangkan bagi anak.</div><div class="visi-item"><i class="fas fa-globe"></i> <strong>Keunggulan Berbudaya</strong><br>Membentuk karakter pendidik yang cerdas, mandiri, dan berakhlak mulia.</div><div class="visi-item"><i class="fas fa-star"></i> <strong>Layanan Berkualitas</strong><br>Menjamin standar mutu stimulasi perkembangan anak di semua lembaga anggota.</div></div>`;
     
     if (misiText.trim()) {
         const lines = misiText.split('\n').filter(l => l.trim());
@@ -749,11 +666,11 @@ async function saveVisiMisi() {
             }
             misiHtml += `<div class="misi-item"><i class="fas fa-star"></i> <strong>${escapeHtml(title)}</strong><br>${escapeHtml(desc)}</div>`;
         }
-        misiHtml += '</div>';
+        misiHtml += '</div><br><div style="background: #EFE2CC; border-radius: 20px; padding: 20px; margin-top: 20px;"><i class="fas fa-tasks"></i> <strong>Capaian Misi Gugus PAUD:</strong><ul style="margin-top: 12px; list-style-type: none;"><li>✓ Meningkatkan mutu pembelajaran PAUD melalui pelatihan guru, KKG Gugus, berbagi media pembelajaran kreatif.</li><li>✓ Mengembangkan karakter anak sesuai nilai Pancasila: menanamkan nilai kejujuran, disiplin, gotong royong, toleransi sejak dini.</li><li>✓ Meningkatkan kerja sama antar lembaga PAUD: membuat lomba bersama, parenting bareng, penilaian bersama supaya adil.</li><li>✓ Meningkatkan peran serta orang tua dan masyarakat: edukasi pola asuh, melibatkan komite/orang tua di program sekolah.</li><li>✓ Mewujudkan PAUD Holistik-Integratif: tidak cuma belajar, tetapi juga memperhatikan gizi, kesehatan, pengasuhan, dan perlindungan anak di lingkungan sekolah.</li></ul></div>';
         komunitasData.misi = misiHtml;
     }
     
-    await saveData();
+    saveData();
     renderVisiMisi();
     showNotification('Visi & Misi berhasil disimpan!', 'success');
 }
@@ -761,7 +678,6 @@ async function saveVisiMisi() {
 // ============================================
 // UTILITY FUNCTIONS
 // ============================================
-
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, function(m) {
@@ -770,34 +686,6 @@ function escapeHtml(str) {
         if (m === '>') return '&gt;';
         return m;
     });
-}
-
-function showLoading(show, message = 'Loading...') {
-    let loader = document.getElementById('globalLoader');
-    if (!loader && show) {
-        loader = document.createElement('div');
-        loader.id = 'globalLoader';
-        loader.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.6);
-            z-index: 10000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 1.2rem;
-            flex-direction: column;
-            gap: 15px;
-        `;
-        loader.innerHTML = `<i class="fas fa-spinner fa-pulse fa-2x"></i><span>${message}</span>`;
-        document.body.appendChild(loader);
-    } else if (loader && !show) {
-        loader.remove();
-    }
 }
 
 function showNotification(message, type) {
@@ -872,10 +760,9 @@ function showPage(pageId) {
 // ============================================
 // INITIALIZATION
 // ============================================
-
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
     checkAdminStatus();
-    await loadDataFromServer();
+    loadData();
     
     // Navigasi
     const navBtns = document.querySelectorAll('.nav-btn');
@@ -908,6 +795,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         closeAdminBtn.onclick = () => adminPanel.classList.remove('open');
     }
     
+    // Tutup panel jika klik di luar
     document.addEventListener('click', function(event) {
         if (adminPanel && adminPanel.classList.contains('open')) {
             if (!adminPanel.contains(event.target) && !adminToggle.contains(event.target)) {
@@ -978,6 +866,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     addDecorations();
     
     console.log(`✅ Website siap! Mode: ${isAdmin ? 'ADMIN' : 'USER'}`);
+    console.log(`Data tersimpan di LocalStorage`);
 });
 
 function addDecorations() {
@@ -994,6 +883,5 @@ function addDecorations() {
     document.body.appendChild(decorRight);
 }
 
-// Export fungsi untuk global (agar bisa dipanggil dari HTML)
+// Export fungsi untuk global
 window.showLoginModal = showLoginModal;
-

@@ -617,6 +617,29 @@ nav.scrolled {
 }
 
 /* ============================================ */
+/* VISI GRID */
+/* ============================================ */
+.grid-visi {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.visi-item {
+    background: #EFE2CC;
+    padding: 15px;
+    border-radius: 15px;
+}
+
+.visi-item i {
+    font-size: 24px;
+    color: var(--primary);
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* ============================================ */
 /* RESPONSIVE */
 /* ============================================ */
 @media (max-width: 768px) {
